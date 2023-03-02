@@ -29,6 +29,11 @@ export default function App() {
   const [subscription, setSubscription] = useState(null);
 
   console.log("x: " + x+ "\ty: " + y + "\tz: " + z);
+  set(ref(database, 'users/' + Date.now()), {
+    x: x,
+    y: y,
+    z : z
+  });
   const _slow = () => Accelerometer.setUpdateInterval(1000);
   const _fast = () => Accelerometer.setUpdateInterval(16);
 
@@ -37,11 +42,7 @@ export default function App() {
       Accelerometer.addListener(setData)
     );
     
-    set(ref(database, 'users/' + Date.now()), {
-      x: x,
-      y: y,
-      z : z
-    });
+    
   };
 
   const _unsubscribe = () => {
