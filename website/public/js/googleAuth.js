@@ -1,12 +1,14 @@
 var provider = new firebase.auth.GoogleAuthProvider();
 // Initialize Firebase
-var config = {
-  apiKey: "AIzaSyB7GImj_BP6Ba7Uo5hobfFDvyMVJodnUCQ",
-  authDomain: "posturenotifications.firebaseapp.com",
-  databaseURL: "https://posturenotifications.firebaseio.com",
-  projectId: "posturenotifications",
-  storageBucket: "posturenotifications.appspot.com",
-  messagingSenderId: "923180751319"
+const config = {
+  apiKey: "AIzaSyDZN7DF3BPdseBoCP2l6A3Yjbc0ECb0pMk",
+  authDomain: "parkingait.firebaseapp.com",
+  databaseURL: "https://parkingait-default-rtdb.firebaseio.com",
+  projectId: "parkingait",
+  storageBucket: "parkingait.appspot.com",
+  messagingSenderId: "987453531886",
+  appId: "1:987453531886:web:d641b174467546f31fb5ff",
+  measurementId: "G-1C4E694RZQ"
 };
 firebase.initializeApp(config);
 var user = firebase.auth().currentUser;
@@ -35,6 +37,7 @@ function googleSignIn(){
   console.log("hello")
   //window.location.href = "newdevice"
   firebase.auth().onAuthStateChanged(user => {
+    console.log(user);
     if (user){
       var database = firebase.database();
       var userID = user.uid;
@@ -45,10 +48,10 @@ function googleSignIn(){
         var hasDevice = snapshot.child(userID).exists();
         console.log(hasDevice);
         if (hasDevice){
-          window.location.href = 'dashboard.html';
+          window.location.href = 'newPatient.html';
         }
         else{
-          window.location.href = 'newDevice.html'
+          window.location.href = 'newPatient.html'
         }
         //var test = snapshot.hasChild("test"); // false
       });

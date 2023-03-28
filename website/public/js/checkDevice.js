@@ -1,12 +1,14 @@
 var provider = new firebase.auth.GoogleAuthProvider();
 // Initialize Firebase
-var config = {
-  apiKey: "AIzaSyB7GImj_BP6Ba7Uo5hobfFDvyMVJodnUCQ",
-  authDomain: "posturenotifications.firebaseapp.com",
-  databaseURL: "https://posturenotifications.firebaseio.com",
-  projectId: "posturenotifications",
-  storageBucket: "posturenotifications.appspot.com",
-  messagingSenderId: "923180751319"
+const config = {
+  apiKey: "AIzaSyDZN7DF3BPdseBoCP2l6A3Yjbc0ECb0pMk",
+  authDomain: "parkingait.firebaseapp.com",
+  databaseURL: "https://parkingait-default-rtdb.firebaseio.com",
+  projectId: "parkingait",
+  storageBucket: "parkingait.appspot.com",
+  messagingSenderId: "987453531886",
+  appId: "1:987453531886:web:d641b174467546f31fb5ff",
+  measurementId: "G-1C4E694RZQ"
 };
 firebase.initializeApp(config);
 
@@ -41,14 +43,12 @@ $(window).on('load',function () {
     var user = firebase.auth().currentUser;
     var database = firebase.database();
     var userID = user.uid;
-    var userRef = database.ref('users/'+userID);
+    var userRef = database.ref('users/'+userID+'/patients');
     var link = $("#deviceID").val();
     // Push a new recommendation to the database using those values
     console.log(link);
     console.log(userID);
-    userRef.set({
-      device: link
-    });
+    userRef.push(link);
   });
 });
 function signout(){
