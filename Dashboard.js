@@ -121,7 +121,7 @@ const Dashboard = ({ navigation }) => {
 
         setPercentGood(good/d.length);
         setTotalSteps(d.length);
-        setAsymmetry((leftSum-rightSum)/(leftSum+rightSum));
+        setAsymmetry(Math.abs((leftSum-rightSum)/(leftSum+rightSum)));
         /*console.log("YUH");
         console.log(parseInt(i)-Date.now());
         console.log(values[i]);
