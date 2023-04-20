@@ -164,7 +164,15 @@ $(window).on('load',function () {
     
 
 
-
+  var dataRef = database.ref('users/');
+  dataRef.once('value').then(function(snapshot){
+    console.log("SNAPSHOT");
+    var data = snapshot.val();
+    var id = Object.values(data[userID]["devices"])[0];
+    console.log(id);
+    console.log(data);
+    console.log(data[userID]);
+  })
 
 
 
@@ -295,7 +303,7 @@ $(window).on('load',function () {
         }
         let percentGood=Math.floor(100*(good/d.length));
         totalSteps = d.length;
-        asymmetry = Math.floor((leftSum-rightSum)/(leftSum+rightSum)*100);
+        asymmetry = Math.abs(Math.floor((leftSum-rightSum)/(leftSum+rightSum)*100));
         console.log(asymmetry);
         console.log(totalSteps);
         console.log(percentGood);
