@@ -1,3 +1,4 @@
+
 ( function ( $ ) {
     "use strict";
 
@@ -36,6 +37,7 @@ var currentDay = currentDate.getDate();
 var currentYear = currentDate.getFullYear();
 
 var percentChart = document.getElementById("percentGoodChartID");
+var percentChart2 = document.getElementById("percentGoodChartID2");
 var lineChart = document.getElementById( "lineChartID" );
 // round corners
 Chart.pluginService.register({
@@ -135,32 +137,48 @@ Chart.pluginService.register({
     },
 })
 // Initialize Firebase
-var config = {
-  apiKey: "AIzaSyB7GImj_BP6Ba7Uo5hobfFDvyMVJodnUCQ",
-  authDomain: "posturenotifications.firebaseapp.com",
-  databaseURL: "https://posturenotifications.firebaseio.com",
-  projectId: "posturenotifications",
-  storageBucket: "posturenotifications.appspot.com",
-  messagingSenderId: "923180751319"
+const config = {
+  apiKey: "AIzaSyDZN7DF3BPdseBoCP2l6A3Yjbc0ECb0pMk",
+  authDomain: "parkingait.firebaseapp.com",
+  databaseURL: "https://parkingait-default-rtdb.firebaseio.com",
+  projectId: "parkingait",
+  storageBucket: "parkingait.appspot.com",
+  messagingSenderId: "987453531886",
+  appId: "1:987453531886:web:d641b174467546f31fb5ff",
+  measurementId: "G-1C4E694RZQ"
 };
 firebase.initializeApp(config);
 $(window).on('load',function () {
 
   // Find the HTML element with the id recommendationForm, and when the submit
   // event is triggered on that element, call submitRecommendation.
+  var deviceID;
   firebase.auth().onAuthStateChanged(user => {
     var user = firebase.auth().currentUser;
     var database = firebase.database();
     var userID = user.uid;
     var userRef = database.ref('users/'+userID);
-    var deviceID;
+    //var deviceID;
+    
+
+    
+
+
+
+
+
+
+
     userRef.once('value').then(function(snapshot) {
-      deviceID = snapshot.val().device;
+      deviceID = Object.values(snapshot.val().devices)[0];
       console.log(deviceID);
-      var dataRef = database.ref('devices/'+deviceID+'/data');
-      var macroDataRef = database.ref('devices/'+deviceID+'/macroData/'+currentYear);
+      //var dataRef = database.ref('devices/'+deviceID+'/data');
+      while (deviceID == null){
+        console.log("Waiting");
+      }
+      var macroDataRef = database.ref('users/VCSiB6zpJpYeL6Y1osI849BZJNf1');
       macroDataRef.once('value').then(function(snap){
-        for (var month in snap.val()){
+        /*for (var month in snap.val()){
           var monthData = snap.val()[month];
           var tempBad = 0;
           var tempTotal = 0;
@@ -189,23 +207,116 @@ $(window).on('load',function () {
         }
           console.log(goodMonth)
 
-        console.log(goodMonth[currentDay-1]);
+        console.log(goodMonth[currentDay-1]);*/
+
+        let d = [];
+        console.log(snap.val());
+        let goalStep = parseInt(snap.val()["goalStep"]);
+        console.log(goalStep);
+        let values = Object.values(snap.val()["StepLength"]);
+        let totalSteps = 0;
+        let asymmetry = 0;
+        let good = 0;
+
+        let left = true;
+        let leftSum = 0;
+        let rightSum = 0;
+        for (let i = 0; i < values.length; i++){
+          console.log(values[i]);
+          let k = parseInt(Object.keys(values[i])[0]);
+          let v = parseInt(Object.values(values[i])[0]);
+          console.log(k);
+          console.log(v);
+          d.push(v);
+          
+          if (v > goalStep){
+            good+=1;
+          }
+          //yes = asymmetry
+          //setAsymmetry(yes+2);
+          //console.log("asym");
+          //console.log(asymmetry);
+          if (left){
+            leftSum +=v;
+            //setAsymmetry(asymmetry+v);
+          }
+          else{
+            rightSum+=v
+            //setAsymmetry(asymmetry-v);
+          }
+          left=!left
+          //setAsymmetry(10);
+          //setAsymmetry(0);
+          //console.log(asymmetry);
+          /*
+          for (let j = 0; j < values[Object.keys()].length;j++){
+            let k = j;
+            let v = values[i][k];
+            console.log("Y");
+            console.log(k);
+            console.log(v);
+            
+            console.log("v, diff");
+            console.log(v);
+            console.log(goalStep);
+            console.log(Date.now()-parseInt(k))
+            if (true){
+              d.push(v);
+              
+              if (v > goalStep){
+                good+=1;
+              }
+              //yes = asymmetry
+              //setAsymmetry(yes+2);
+              //console.log("asym");
+              //console.log(asymmetry);
+              if (left){
+                leftSum +=v;
+                //setAsymmetry(asymmetry+v);
+              }
+              else{
+                rightSum+=v
+                //setAsymmetry(asymmetry-v);
+              }
+              left=!left
+          }
+          }
+
+          let percentGood=(good/d.length);
+          totalSteps = d.length;
+          asymmetry = (leftSum-rightSum)/(leftSum+rightSum);*/
+          /*console.log("YUH");
+          console.log(parseInt(i)-Date.now());
+          console.log(values[i]);
+          console.log(parseInt(i));
+          console.log(Date.now());
+          console.log((Date.now()-parseInt(Object.keys(values)[i]))/1000/3600)
+          */
+        }
+        let percentGood=Math.floor(100*(good/d.length));
+        totalSteps = d.length;
+        asymmetry = Math.floor((leftSum-rightSum)/(leftSum+rightSum)*100);
+        console.log(asymmetry);
+        console.log(totalSteps);
+        console.log(percentGood);
+
+
         var percentChartOptions = new Chart( percentChart, {
           type:'doughnut',
           data:{
-            labels: ["Time Spent with Good Posture" , "Time Spent with Bad Posture"],
+            labels: ["Asymmetry" , ""],
             datasets:[
               {
                 label:"Time (minutes)",
                 backgroundColor:[brandSuccess,"#CCCCCC66"],
-                data:[goodMonth[currentDay-1], 100-goodMonth[currentDay-1]]
+                data:[asymmetry, 100-asymmetry]
               }
             ]
           },
           options:{
             title:{
               display: true,
-              text: "Time Spent with Good Posture",
+              text: "Asymmetry",
               fontSize: 30
             },
             legend:{
@@ -219,7 +330,49 @@ $(window).on('load',function () {
                 center: {
                     // the longest text that could appear in the center
                     maxText: '2000000',
-                    text: goodMonth[currentDay-1].toString()+'%',
+                    text: (asymmetry).toString()+'%',
+                    fontColor: "#000000",
+                    fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                    fontStyle: 'normal',
+                    // fontSize: 12,
+                    // if a fontSize is NOT specified, we will scale (within the below limits) maxText to take up the maximum space in the center
+                    // if these are not specified either, we default to 1 and 256
+                    minFontSize: 1,
+                    maxFontSize: 256,
+                }
+            }
+          }
+        });
+        var percentChartOptions2 = new Chart( percentChart2, {
+          type:'doughnut',
+          data:{
+            labels: ["Time Spent with Correct Step Length" , "Time Spent with Incorrect Step Length"],
+            datasets:[
+              {
+                label:"Time (minutes)",
+                backgroundColor:[brandSuccess,"#CCCCCC66"],
+                data:[percentGood, 100-percentGood]
+              }
+            ]
+          },
+          options:{
+            title:{
+              display: true,
+              text: "Time Spent with Correct Step Length",
+              fontSize: 30
+            },
+            legend:{
+              display:false
+            },
+            cutoutPercentage:80,
+            elements: {
+                arc: {
+                    roundedCornersFor: 0
+                },
+                center: {
+                    // the longest text that could appear in the center
+                    maxText: '2000000',
+                    text: (percentGood).toString()+'%',
                     fontColor: "#000000",
                     fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
                     fontStyle: 'normal',
@@ -235,7 +388,7 @@ $(window).on('load',function () {
         var myChart = new Chart( lineChart, {
             type: 'line',
             data: {
-                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                labels: Array(d.length).fill(''),
                 datasets: [
                 {
                   label: 'My First dataset',
@@ -243,7 +396,7 @@ $(window).on('load',function () {
                   borderColor: brandInfo,
                   pointHoverBackgroundColor: '#fff',
                   borderWidth: 2,
-                  data: goodYear
+                  data: d
               }
               ]
             },
@@ -278,8 +431,8 @@ $(window).on('load',function () {
                     yAxes: [ {
                           ticks: {
                             beginAtZero: true,
-                            maxTicksLimit: 5,
-                            stepSize: Math.ceil(100 / 5),
+                            maxTicksLimit: 100,
+                            stepSize:10,
                             max: 100
                           },
                           gridLines: {

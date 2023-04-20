@@ -313,7 +313,7 @@ const MainPage = ({ navigation }) => {
       />
 
 
-<Text style={{ color: '#000000' , fontSize : 110, padding: 10}}> </Text>
+<Text style={{ color: '#000000' , fontSize : 60, padding: 10}}> </Text>
       <MultiSwitch
             style={{paddingTop:50}}
             items={items}
@@ -330,12 +330,7 @@ const MainPage = ({ navigation }) => {
       </TouchableOpacity>
       </View>
       <Text style={{ color: '#808080' , fontSize : 15, padding: 10}}>User ID: {auth.currentUser.uid} </Text>
-      <MultiSwitch
-            style={{paddingTop:50}}
-            items={items}
-            value={vibrateValue}
-            onChange={(val) => setVibrateValue(val)}
-          />
+
     </View>
     
   );

@@ -119,7 +119,7 @@ const Dashboard = ({ navigation }) => {
          }
         }
 
-        setPercentGood(good/10);
+        setPercentGood(good/d.length);
         setTotalSteps(d.length);
         setAsymmetry((leftSum-rightSum)/(leftSum+rightSum));
         /*console.log("YUH");
