@@ -36,7 +36,7 @@ const Dashboard = ({ navigation }) => {
   const [totalSteps, setTotalSteps] = useState(0);
   const [percentGood, setPercentGood] = useState(0);
   const [asymmetry, setAsymmetry] = useState(0);
-  const userRef = ref(db, 'users/'+auth.currentUser.uid);
+  const userRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~"));
   const [pieData, setPieData] = useState({labels:["NA"], data:[0]});
   const chartConfig = {
     backgroundGradientFrom: "#1E2923",
@@ -57,7 +57,7 @@ const Dashboard = ({ navigation }) => {
 
   useEffect(() => {
 
-    const dataRef = ref(db, 'users/'+auth.currentUser.uid+'/StepLength');
+    const dataRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~")+'/StepLength');
     get(dataRef).then((snapshot) => {
 
       let d = [];

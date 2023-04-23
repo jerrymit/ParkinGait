@@ -39,7 +39,7 @@ const MainPage = ({ navigation }) => {
     navigation.navigate("LogIn");
   }else{
   }
-  const calibrationRef = ref(db, 'users/'+auth.currentUser.uid+'/Calibration');
+  const calibrationRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~")+'/Calibration');
   get(calibrationRef).then((snapshot) => {
     // Extract the data from the snapshot
     const calibrationData = snapshot.val();
@@ -48,7 +48,7 @@ const MainPage = ({ navigation }) => {
     //console.log(gaitConstant + " " + DETECTION_THRESHOLD);
   })
 
-  const userRef = ref(db, 'users/'+auth.currentUser.uid);
+  const userRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~"));
   get(userRef).then((snapshot) => {
     // Extract the data from the snapshot
     const userData = snapshot.val();
@@ -89,7 +89,7 @@ const MainPage = ({ navigation }) => {
   const DataTime = (yData.length > 0) ? (yData.length/ACCELEROMETER_HZ) : 0;
   const zData = accelerometerData.map(data => data.z.toFixed(4));
 
-  const postListRef = ref(db, 'users/'+auth.currentUser.uid+'/StepLength/');
+  const postListRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~")+'/StepLength/');
   const newPostRef = push(postListRef);
   //const magnitudeData = accelerometerData.map(data => Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z));
 
@@ -190,7 +190,7 @@ const MainPage = ({ navigation }) => {
     console.log("STEP");
     console.log(stepLengthest);
 
-    if (stepLengthest< 100){
+    if (stepLengthest< goalStep){
       Haptics.notificationAsync(
         Haptics.NotificationFeedbackType.Error
       )
@@ -329,7 +329,7 @@ const MainPage = ({ navigation }) => {
         <Text style={styles.buttonText}>{'Go to Dashboard'}</Text>
       </TouchableOpacity>
       </View>
-      <Text style={{ color: '#808080' , fontSize : 15, padding: 10}}>User ID: {auth.currentUser.uid} </Text>
+      <Text style={{ color: '#808080' , fontSize : 15, padding: 10}}>User ID: {auth.currentUser.email} </Text>
 
     </View>
     

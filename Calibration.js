@@ -126,7 +126,7 @@ const Calibration = ({ navigation }) => {
       //const gaitConstant1 = 0.45;
       console.log(gaitConstant);
   
-      set(ref(database, 'users/'+auth.currentUser.uid+'/Calibration'), {
+      set(ref(database, 'users/'+(auth.currentUser.email).replace(".","~")+'/Calibration'), {
         gaitConstant: gaitConstant,
         Threshold: DETECTION_THRESHOLD,
       });
