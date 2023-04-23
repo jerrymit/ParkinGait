@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Vibration } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import { initializeApp, firebase } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
@@ -26,12 +26,10 @@ const firebaseConfig = {
   
   const ACCELEROMETER_TIMING = 100; // ms
   const ACCELEROMETER_HZ = 1000/ACCELEROMETER_TIMING;
-  const WINDOW_SIZE = 5;
+  const DISTANCE_TRAVELED = 5;
+  const DISTANCE_THRESHOLD = 3;
   const USER_HEIGHT = 1.778 // m
   const METERS_TO_INCHES = 39.3701 // constant, no units
-  //ADD IN?
-  const DISTANCE_TRAVELED = 5 // m
-  //const STEP_SIZE = ??? // m
 const Calibration = ({ navigation }) => {
     const [isCollecting, setIsCollecting] = useState(false);
     const [accelerometerData, setAccelerometerData] = useState([]);
@@ -41,7 +39,8 @@ const Calibration = ({ navigation }) => {
         setAccelerometerData([]);
         setTimeout(() => {
           setIsCollecting(true);
-        }, 2000);
+          Vibration.vibrate(100);
+        }, 3000);
       } else {
         setIsCollecting(false);
       }
@@ -63,72 +62,50 @@ const Calibration = ({ navigation }) => {
     const handleLogData = () => {
       const xData = accelerometerData.map(data => data.x.toFixed(4));
       const yData = accelerometerData.map(data => data.y.toFixed(4)-1);
-      //console.log(yData);
-      const zData = accelerometerData.map(data => data.z.toFixed(4));
+      const zData = accelerometerData.map(data => parseFloat(data.z.toFixed(4)));
       const magnitudeData = accelerometerData.map(data => Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z));
-  
+
       /*console.log("X data: " + xData);
       console.log("Y data: " + yData);
       console.log("Z data: " + zData);
       console.log("Mag data: " + magnitudeData);*/
       
-      //const yfiltered = filterData(yData);
-      
-      /*function filterData(data) {
-        const filteredData = data.filter(item => !isNaN(item));
-        const windowSize = WINDOW_SIZE;
-        const window = new Array(windowSize).fill(0);
-        const filtered = [];
-      
-        for (let i = 0; i < filteredData.length; i++) {
-          window.shift();
-          window.push(parseFloat(filteredData[i]));
-          if (i >= windowSize - 1) {
-            const average = window.reduce((a, b) => a + b) / windowSize;
-            filtered.push(parseFloat(average.toFixed(4)));
-          }
+      const average = array => array.slice(0, array.length - 10).reduce((a, b) => a + b, 0) / (array.length - 10);
+      //const average = array => array.reduce((a, b) => a + b) / array.length;
+      const mean = average(zData);
+      //console.log(mean);
+
+      const steps = [];
+
+      for (let z = 0, index = 0; z < zData.length-10; z++) {
+      //for (let z = 0; z < zData.length; z++){
+        if (z - index > DISTANCE_THRESHOLD && ((zData[z] < mean && zData[z-1] > mean) || (zData[z-1] < mean && zData[z] > mean))) {
+          steps.push((z+(z-1))/2);
+          index = z;
         }
-        return filtered;
-      }*/
-      
-      //const DETECTION_THRESHOLD = 0.05; // gs
-      const DETECTION_THRESHOLD = calculateMAD(yData);
-      console.log(DETECTION_THRESHOLD);
-  
-      function calculateMAD(data) {
-        const median = calculateMedian(data);
-        const absoluteDeviations = data.map((x) => Math.abs(x - median));
-        const mad = calculateMedian(absoluteDeviations);
-        const mean = calculateMean(data);
-        return mean;
       }
-      
-      function calculateMedian(data) {
-        const sortedData = data.slice().sort((a, b) => a - b);
-        const middle = Math.floor(sortedData.length / 2);
-      
-        if (sortedData.length % 2 === 0) {
-          return (sortedData[middle - 1] + sortedData[middle]) / 2;
-        }
-      
-        return sortedData[middle];
-      }    
-  
-      function calculateMean(data){
-        const absoluteValues = data.map(x => Math.abs(x));
-        const sum = absoluteValues.reduce((accumulator, currentValue) => accumulator + currentValue);
-        const mean = sum / data.length;
-  
-        return mean;
+      //console.log(steps);
+      const times = [];
+
+      for (let i = 1; i < steps.length; i++) {
+        let diff = steps[i] - steps[i-1];
+        times.push(diff/10);
       }
-  
-      const gaitConstant = DISTANCE_TRAVELED / (yData.length / ACCELEROMETER_HZ);    
-      //const gaitConstant1 = 0.45;
+      //console.log(times);
+
+      const av_time = times.reduce((a, b) => a + b, 0) / times.length;
+      //console.log(av_time);
+      const av_step_length = DISTANCE_TRAVELED / steps.length;
+      //console.log(av_step_length);
+      const av_step_length_in = av_step_length * METERS_TO_INCHES;
+      console.log(av_step_length_in);
+
+      const gaitConstant = av_step_length / av_time;
       console.log(gaitConstant);
   
-      set(ref(database, 'users/'+auth.currentUser.uid+'/Calibration'), {
+      set(ref(database, 'users/' + auth.currentUser.uid + '/Calibration'), {
         gaitConstant: gaitConstant,
-        Threshold: DETECTION_THRESHOLD,
+        Threshold: mean,
       });
       console.log("MOVING TO MAINPAGE");
       navigation.navigate("MainPage");
