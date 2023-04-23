@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View,Switch} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View,Switch, Vibration} from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import { initializeApp, firebase } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
@@ -24,13 +24,8 @@ const ACCELEROMETER_TIMING = 100; // ms
 const ACCELEROMETER_HZ = 1000 / ACCELEROMETER_TIMING;
 const USER_HEIGHT = 1.778 // m
 const METERS_TO_INCHES = 39.3701 // constant, no units
-//import { gaitConstant, DETECTION_THRESHOLD } from './Calibration.js';
 let gaitConstant, DETECTION_THRESHOLD, goalStep;
-
-
-//const gaitConstant = 1;
-//const DETECTION_THRESHOLD = 0.05; //gs
-const DISTANCE_THRESHOLD = 1; // represents distance between peaks/valleys to filter out noise
+const DISTANCE_THRESHOLD = 3; // represents distance between peaks/valleys to filter out noise
 
 
 const MainPage = ({ navigation }) => {
@@ -53,9 +48,8 @@ const MainPage = ({ navigation }) => {
     // Extract the data from the snapshot
     const userData = snapshot.val();
     setGoalStep(userData.goalStep);
-    //console.log(gaitConstant + " " + DETECTION_THRESHOLD);
   })
-  //console.log(goalStep);
+
   const [isWalking, setIsWalking] = useState(false);
   const [accelerometerData, setAccelerometerData] = useState([]);
   const [stepLength, setStepLength] = useState(0);
@@ -74,20 +68,17 @@ const MainPage = ({ navigation }) => {
   const toggleSwitch = () => {setIsEnabled(previousState => !previousState); }
 
   const [range, setRange] = useState(30);
-
-  
-
   const [lastPeakSign, setLastPeakSign] = useState(-1); // -1 for positive, 1 for negative
   const [lastPeakIndex, setLastPeakIndex] = useState(0);
   const [isFirstPeakPositive, setIsFirstPeakPositive] = useState(false);
-
-  const xData = accelerometerData.map(data => data.x.toFixed(4));
+  
+  const xData = accelerometerData.map(data => parseFloat(data.x.toFixed(4)));
   const yData = accelerometerData.map(data => parseFloat(data.y.toFixed(4)) - 1);
-  const yDataNext = (yData.length > 0) ? yData[yData.length-1] : 0;
-  const yDataCurr = (yData.length > 1) ? yData[yData.length-2] : 0;
-  const yDataPrev = (yData.length > 2) ? yData[yData.length-3] : 0;
-  const DataTime = (yData.length > 0) ? (yData.length/ACCELEROMETER_HZ) : 0;
-  const zData = accelerometerData.map(data => data.z.toFixed(4));
+  const zData = accelerometerData.map(data => parseFloat(data.z.toFixed(4)));
+  //const zDataNext = (zData.length > 0) ? zData[zData.length-1] : 0;
+  const zDataCurr = (zData.length > 0) ? zData[zData.length-1] : 0;
+  const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
+  const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
 
   const postListRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~")+'/StepLength/');
   const newPostRef = push(postListRef);
@@ -113,11 +104,8 @@ const MainPage = ({ navigation }) => {
     
   }
 
-  
-
-
-  if (waitingFor1stValue && yDataCurr > yDataPrev && yDataCurr > yDataNext && yDataCurr > DETECTION_THRESHOLD){
-    if (!isFirstPeakPositive || lastPeakIndex === -1) {
+  if (waitingFor1stValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
+    if (lastPeakIndex === -1 || zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
       if(lastPeakSign == -1){
         if (peakTimes.length == 0) {
           setPeakTimes([...peakTimes, DataTime]);
@@ -126,7 +114,7 @@ const MainPage = ({ navigation }) => {
           setPeakTimes((prevData) => [...prevData, DataTime]);
         }
         //console.log(peakTimes);
-        setLastPeakIndex(yData.length);
+        setLastPeakIndex(zData.length);
         setLastPeakSign(1);
         setIsFirstPeakPositive(true);
         setWaitingFor1stValue(false);
@@ -136,49 +124,35 @@ const MainPage = ({ navigation }) => {
     }
   } 
 
-  if (waitingFor2ndValue && yDataCurr < yDataPrev && yDataCurr < yDataNext && yDataCurr < -0.1) {
-    if (isFirstPeakPositive && yData.length - lastPeakIndex >= DISTANCE_THRESHOLD) {
+  if (waitingFor2ndValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
+    if (zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
       if (lastPeakSign == 1) {
         setPeakTimes((prevData) => [...prevData, DataTime]);
-        setLastPeakIndex(yData.length);
+        setLastPeakIndex(zData.length);
         setLastPeakSign(-1);
         setWaitingFor2ndValue(false);
-        setWaitingFor3rdValue(true);
+        //setWaitingFor3rdValue(true);
+        setWaitingFor1stValue(true);
       }
     }
   }
  
-  if (waitingFor3rdValue && yDataCurr > yDataPrev && yDataCurr > yDataNext && yDataCurr > DETECTION_THRESHOLD){
+  /*if (waitingFor3rdValue && yDataCurr > yDataPrev && yDataCurr > yDataNext && yDataCurr > DETECTION_THRESHOLD){
     if (yData.length - lastPeakIndex >= DISTANCE_THRESHOLD) {
       if(lastPeakSign == -1){
         setPeakTimes((prevData) => [...prevData, DataTime]);
         setLastPeakIndex(yData.length);
         setLastPeakSign(1);
         setWaitingFor3rdValue(false);
-
-        /*const peak2 = peakTimes[peakTimes.length - 1];
-        const peak1 = peakTimes[peakTimes.length - peakTimes.length];
-        const peakBetweenTime = peak2 - peak1;
-        //const gaitConstant = 0.45 * USER_HEIGHT + 0.15 * peakBetweenTime - 0.35;
-        const gaitConstant = parseFloat((USER_HEIGHT * 0.45) / peakBetweenTime);
-        const stepLengthest = USER_HEIGHT * gaitConstant * METERS_TO_INCHES;
-        
-        setStepLength(stepLengthest);
-        setStepLengthFirebase((prevStep) => [...prevStep, stepLengthest]);
-        console.log(stepLength);
-        setPeakTimes([peakTimes[peakTimes.length - 1]]);*/
       }
     }
-  } 
+  } */
 
-  if (peakTimes.length == 3){
+  if (peakTimes.length == 2){
     console.log(peakTimes);
     const peak2 = peakTimes[peakTimes.length - 1];
     const peak1 = peakTimes[peakTimes.length - peakTimes.length];
     const peakBetweenTime = peak2 - peak1;
-
-    //const gaitConstant = 0.45 * USER_HEIGHT + 0.15 * peakBetweenTime - 0.35;
-    //const gaitConstant = parseFloat((USER_HEIGHT * 0.45) / peakBetweenTime);
     const stepLengthest = peakBetweenTime * gaitConstant * METERS_TO_INCHES;
         
     setStepLength(stepLengthest);
@@ -190,18 +164,16 @@ const MainPage = ({ navigation }) => {
     console.log("STEP");
     console.log(stepLengthest);
 
-    if (stepLengthest< goalStep){
-      Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Error
-      )
+
+    if (stepLengthest > goalStep){
+      Vibration.vibrate(50);
     }
     else{
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
 
-    setWaitingFor2ndValue(true);
-    setIsFirstPeakPositive(true);
-
+    setWaitingFor1stValue(true);
+    //setIsFirstPeakPositive(true);
     setPeakTimes([peakTimes[peakTimes.length - 1]]);
   }
 
@@ -219,7 +191,8 @@ const MainPage = ({ navigation }) => {
         setIsFirstPeakPositive(false);
         setLastPeakSign(-1);
         setLastPeakIndex(-1);
-      }, 2000);
+        Vibration.vibrate(100);
+      }, 3000);
     } else {
       setIsWalking(false);
       setWaitingFor1stValue(false);
@@ -232,7 +205,7 @@ const MainPage = ({ navigation }) => {
   };
   async function playSound() {
     //console.log('Loading Sound');
-    const { sound } = await Audio.Sound.createAsync( require('./beep.mp3'), { shouldPlay: true }
+    const { sound } = await Audio.Sound.createAsync( require('./beep2.mp3'), { shouldPlay: true }
     );
     setSound(sound);
 
@@ -281,7 +254,7 @@ const MainPage = ({ navigation }) => {
   const moveToDashboard = () => {
     navigation.navigate("Dashboard");
   }
-  console.log(goalStep);
+  //console.log(goalStep);
 
   return (
     <View style={styles.container}>
