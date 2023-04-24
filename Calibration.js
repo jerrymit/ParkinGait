@@ -23,16 +23,29 @@ const firebaseConfig = {
   // Initialize Realtime Database and get a reference to the service
   const database = getDatabase(app);
   
-  
   const ACCELEROMETER_TIMING = 100; // ms
   const ACCELEROMETER_HZ = 1000/ACCELEROMETER_TIMING;
   const DISTANCE_TRAVELED = 5;
   const DISTANCE_THRESHOLD = 3;
   const USER_HEIGHT = 1.778 // m
   const METERS_TO_INCHES = 39.3701 // constant, no units
-const Calibration = ({ navigation }) => {
+  let ScreenHeight = Dimensions.get("window").height;
+  
+  const Calibration = ({ navigation }) => {
+    if (auth.currentUser==null){
+      navigation.navigate("LogIn");
+    }else{
+    }
+    const RegisterRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~"));
+    get(RegisterRef).then((snapshot) => {
+      // Extract the data from the snapshot
+      const RegisterData = snapshot.val();
+      setGoalStep(RegisterData.height * 0.414);
+    });
     const [isCollecting, setIsCollecting] = useState(false);
     const [accelerometerData, setAccelerometerData] = useState([]);
+    const [goalStep, setGoalStep] = useState(0);
+    const [newGoalStep, setNewGoalStep] = useState(0);
     
     const handleToggleCollecting = () => {
       if (!isCollecting) {
@@ -106,20 +119,36 @@ const Calibration = ({ navigation }) => {
       set(ref(database, 'users/'+(auth.currentUser.email).replace(".","~")+'/Calibration'), {
         gaitConstant: gaitConstant,
         Threshold: mean,
+        GoalStep: newGoalStep,
       });
       console.log("MOVING TO MAINPAGE");
       navigation.navigate("MainPage");
     }
 
     return (
-        <View style={styles.container}>
-            <TouchableOpacity style={styles.button} onPress={handleToggleCollecting}>
+      <View style={styles.container}>
+          <Text style={styles.titleText}> Calibration </Text>
+          <Text style={styles.text}>Recommended Step Length: {goalStep.toFixed(0)} inches</Text>
+          <View style={styles.inputContainer}>
+          <View style={styles.rowContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Step Length Goal (inches)"
+                      keyboardType="numeric"
+                      maxLength={3}
+                      returnKeyType={ 'done' }
+                      onChangeText={newText => setNewGoalStep(newText)}
+                    />
+            </View>
+          </View>
+          <Text numberOfLines={5}></Text>
+          <TouchableOpacity style={styles.button} onPress={handleToggleCollecting}>
             <Text style={styles.buttonText}>{isCollecting ? 'Stop Collecting' : 'Start Collecting'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleLogData}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleLogData}>
             <Text style={styles.buttonText}>Calibrate</Text>
-            </TouchableOpacity>
-        </View>
+          </TouchableOpacity>
+      </View>
     );
 };
 
@@ -127,9 +156,49 @@ export default Calibration;
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      // backgroundColor: "#222831",
+      backgroundColor: "#ffffff",
+      borderWidth: 2,
+      height: ScreenHeight,
+    },
+    formContainer: {
+      flex: 1,
+      backgroundColor: "#ffffff",
+      marginTop: ScreenHeight * 0.08,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 0,
+    }, 
+    input: {
+      backgroundColor: "white",
+      borderWidth: 3,
+      paddingHorizontal: 15,
+      paddingVertical: 5,
+      borderRadius: 10,
+      marginTop: 5,
+    },
+    rowContainer: {
+      flexDirection: "row",
+      width: "100%",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    inputContainer: {
+      width: "90%",
+      backgroundColor: "#ffffff",
+      marginTop: 20,
+      alignItems: "stretch",
+      borderWidth: 0,
+    },
+    buttonContainer: {
+      width: "100%",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 10,
+      paddingHorizontal: 50,
     },
     button: {
       alignItems: 'center',
@@ -145,7 +214,16 @@ const styles = StyleSheet.create({
       textAlign: 'center',
     },
     text: {
-      margin: 10,
+      color: '#000',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      fontSize: 16,
+    },
+    titleText: {
+      color: "#30475E",
+      fontWeight: "600",
+      fontSize: 24,
+      marginBottom: 15,
     },
   });
   
