@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import MultiSwitch from 'react-native-multiple-switch'
 import Slider from '@react-native-community/slider';
+let ScreenHeight = Dimensions.get("window").height;
 
 const ACCELEROMETER_TIMING = 100; // ms
 const ACCELEROMETER_HZ = 1000 / ACCELEROMETER_TIMING;
@@ -55,8 +56,10 @@ const MainPage = ({ navigation }) => {
   const [sound, setSound] = useState();
   const [goalStep, setGoalStep] = useState(0);
 
-  const items = ['Vibrate Phone', 'Vibrate Wristband', 'No Vibrations']
-  const [vibrateValue, setVibrateValue] = useState(items[0])
+  const vib_choices = ['Over Step Goal', 'Under Step Goal'];
+  const [vibrateOption, setVibrationOption] = useState(vib_choices[0]);
+  const items = ['Vibrate Phone', 'Vibrate Wristband', 'No Vibrations'];
+  const [vibrateValue, setVibrateValue] = useState(items[0]);
 
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => {setIsEnabled(previousState => !previousState); }
@@ -158,13 +161,20 @@ const MainPage = ({ navigation }) => {
     console.log("STEP");
     console.log(stepLengthest);
 
-
-    if (vibrateValue == items[0]){
-      if (stepLengthest > goalStep){
-        Vibration.vibrate(50);
+    if (vibrateOption == vib_choices[0]){
+      if (vibrateValue == items[0]){
+        if (stepLengthest > goalStep){
+          Vibration.vibrate(50);
+          playSound();
+        }
       }
-      else{
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+    if (vibrateOption == vib_choices[1]){
+      if (vibrateValue == items[0]){
+        if (stepLengthest < goalStep){
+          Vibration.vibrate(50);
+          playSound();
+        }
       }
     }
 
@@ -221,10 +231,6 @@ const MainPage = ({ navigation }) => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
         )*/
         playSound();
-        //console.log('Loading Sound');
-        //playSound();
-
-
       }   
     }, 60.0/range*1000)
     if (isWalking) {
@@ -257,15 +263,14 @@ const MainPage = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={{ color: '#000000' , fontSize : 40, paddingTop: 40}}> Gait Tracker </Text>
-      <Text style={{ color: '#000000' , fontSize : 40, padding: 0}}> Home Page </Text>
+      <Text style={{ color: '#000000' , fontSize : 35, paddingTop: ScreenHeight * 0.02}}> Gait Tracker Home Page </Text>
       <TouchableOpacity style={styles.button} onPress={handleToggleWalking}>
         <Text style={styles.buttonTextBig}>{isWalking ? 'Stop Walking' : 'Start Walking'}</Text>
       </TouchableOpacity>
-      <Text style={{fontSize: 20, paddingTop: 30}}>Step Length Estimate: {stepLength.toFixed(2)} inches</Text>
-      <Text style={{ color: '#808080' , fontSize : 15, padding: 10}}>Goal Step Length: {goalStep} inches </Text>
+      <Text style={{fontSize: 20, paddingTop: ScreenHeight * 0.02}}>Step Length Estimate: {stepLength.toFixed(2)} inches</Text>
+      <Text style={{ color: '#808080' , fontSize : 16, padding: ScreenHeight * 0.005}}>Goal Step Length: {goalStep} inches </Text>
 
-      <Text style={{fontSize:30, paddingTop: 50, paddingBottom:20}}>Start Metronome</Text>
+      <Text style={{fontSize:30, paddingTop: ScreenHeight * 0.05, paddingBottom:ScreenHeight * 0.02}}>Start Metronome</Text>
       <Switch
         trackColor={{false: '#767577', true: '#81b0ff'}}
         thumbColor={isEnabled ? '#f5dd4b' : '#f4f3f4'}
@@ -274,40 +279,43 @@ const MainPage = ({ navigation }) => {
         onValueChange={toggleSwitch}
         value={isEnabled}
       />
-      <Text style={{ color: '#000000' , fontSize : 20, padding: 10}}> {Math.floor(range)} Steps per Minute </Text>
+      <Text style={{ color: '#000000' , fontSize : 20, padding: ScreenHeight * 0.01}}> {Math.floor(range)} Steps per Minute </Text>
       <Slider
-        style={{width: 200, height: 40, paddingBottom: 40, paddingTop: 0}}
+        style={{width: 200, height: 40, paddingBottom: ScreenHeight * 0.05, paddingTop: 0}}
         minimumValue={30}
         maximumValue={120}
         minimumTrackTintColor="#81b0ff"
         maximumTrackTintColor="#000000"
         onValueChange={(value)=>setRange(value)}
       />
-
-
-<Text style={{ color: '#000000' , fontSize : 60, padding: 10}}> </Text>
+<Text style={{ color: '#000000' , fontSize : 20, paddingTop: ScreenHeight * 0.02, }}>Vibrate If... </Text>
       <MultiSwitch
-            style={{paddingTop:50}}
+            items={vib_choices}
+            value={vibrateOption}
+            onChange={(val1) => setVibrationOption(val1)}
+          />
+
+<Text style={{ color: '#000000' , fontSize : 20, paddingTop: ScreenHeight * 0.05}}>Vibration Mode</Text>
+      <MultiSwitch
+            style={{paddingTop:ScreenHeight * 0.005}}
             items={items}
             value={vibrateValue}
             onChange={(val) => setVibrateValue(val)}
           />
 
-<View style={{ flexDirection:"row" }}>   
-      <TouchableOpacity style={styles.button} onPress={moveToRegister}>
+<View style={{ flexDirection:"row", paddingTop: ScreenHeight * 0.05 }}>   
+      <TouchableOpacity style={styles.button2} onPress={moveToRegister}>
         <Text style={styles.buttonText}>{'Change User Information'}</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={moveToDashboard}>
+      <TouchableOpacity style={styles.button2} onPress={moveToDashboard}>
         <Text style={styles.buttonText}>{'Go to Dashboard'}</Text>
       </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.button} onPress={moveToCalibration}>
+      <TouchableOpacity style={styles.button2} onPress={moveToCalibration}>
         <Text style={styles.buttonText}>{'Recalibrate'}</Text>
       </TouchableOpacity>
-      <Text style={{ color: '#808080' , fontSize : 15, padding: 10}}>User ID: {auth.currentUser.email} </Text>
-
+      <Text style={{ color: '#808080' , fontSize : 15, padding: ScreenHeight * 0.02}}>User ID: {auth.currentUser.email} </Text>
     </View>
-    
   );
 };
 
@@ -327,7 +335,14 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4CAF50',
-    padding: 10,
+    padding: ScreenHeight * 0.01,
+    borderRadius: 5,
+    margin: 10,
+    alignItems: 'flex-start'
+  },
+  button2: {
+    backgroundColor: '#4CAF50',
+    padding: ScreenHeight * 0.01,
     borderRadius: 5,
     margin: 10,
     alignItems: 'flex-start'
@@ -344,6 +359,6 @@ const styles = StyleSheet.create({
     fontSize: 20
   },
   text: {
-    margin: 10,
+    margin: 1,
   },
 });
