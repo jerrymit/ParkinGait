@@ -159,11 +159,13 @@ const MainPage = ({ navigation }) => {
     console.log(stepLengthest);
 
 
-    if (stepLengthest > goalStep){
-      Vibration.vibrate(50);
-    }
-    else{
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (vibrateValue == items[0]){
+      if (stepLengthest > goalStep){
+        Vibration.vibrate(50);
+      }
+      else{
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }
     }
 
     setWaitingFor1stValue(true);
