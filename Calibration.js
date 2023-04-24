@@ -3,8 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, TextInput, View, Keyboard, Vibratio
 import { Accelerometer } from 'expo-sensors';
 import { initializeApp, firebase } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, set } from "firebase/database";
-import { auth } from "./firebase";
+import { getDatabase, ref, set, get, push } from "firebase/database";
+import { auth, db } from "./firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
