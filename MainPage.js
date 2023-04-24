@@ -248,6 +248,9 @@ const MainPage = ({ navigation }) => {
   const moveToDashboard = () => {
     navigation.navigate("Dashboard");
   }
+  const moveToCalibration = () => {
+    navigation.navigate("Calibration");
+  }
   //console.log(goalStep);
 
   return (
