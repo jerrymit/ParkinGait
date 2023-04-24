@@ -40,14 +40,8 @@ const MainPage = ({ navigation }) => {
     const calibrationData = snapshot.val();
     gaitConstant = calibrationData.gaitConstant;
     DETECTION_THRESHOLD = calibrationData.Threshold;
+    setGoalStep(parseFloat(calibrationData.GoalStep));
     //console.log(gaitConstant + " " + DETECTION_THRESHOLD);
-  })
-
-  const userRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~"));
-  get(userRef).then((snapshot) => {
-    // Extract the data from the snapshot
-    const userData = snapshot.val();
-    setGoalStep(userData.goalStep);
   })
 
   const [isWalking, setIsWalking] = useState(false);
@@ -302,6 +296,9 @@ const MainPage = ({ navigation }) => {
         <Text style={styles.buttonText}>{'Go to Dashboard'}</Text>
       </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.button} onPress={moveToCalibration}>
+        <Text style={styles.buttonText}>{'Recalibrate'}</Text>
+      </TouchableOpacity>
       <Text style={{ color: '#808080' , fontSize : 15, padding: 10}}>User ID: {auth.currentUser.email} </Text>
 
     </View>
