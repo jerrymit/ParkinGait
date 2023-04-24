@@ -304,8 +304,7 @@ const styles = StyleSheet.create({
     // backgroundColor: "#222831",
     backgroundColor: "#dedad2",
     borderWidth: 2,
-    
-    : ScreenHeight,
+    height: ScreenHeight,
   },
   scrollContainer: {
     flex: 1,
