@@ -28,7 +28,6 @@ const Register = ({ navigation }) => {
   const [passwordx, setPasswordx] = useState("");
   const [name, setName] = useState("");
   const [height, setHeight] = useState("");
-  const [goalStep, setGoalStep] = useState("");
   const [listOpen, setListOpen] = useState(false);
   const {
     control,
@@ -41,8 +40,7 @@ const Register = ({ navigation }) => {
       height: "",
       email: "",
       password: "",
-      passwordRepeat: "",
-      goalStep: ""
+      passwordRepeat: ""
     },
     // defaultValues: {
     //   name: "",
@@ -70,15 +68,13 @@ const Register = ({ navigation }) => {
     set(ref(db, 'users/'+(userData.email).replace(".","~")+"/"), {
       email: userData.email,
       name: userData.name,
-      height: userData.height,
-      goalStep: userData.goalStep
+      height: userData.height
     });
 
   };
   const onSubmit = (data) => {
 
-    handleSignUp(data.email, data.password, data.name, data.height, data.goalStep);
-    console.log(data.goalStep);
+    handleSignUp(data.email, data.password, data.name, data.height);
     navigation.navigate("Calibration");
   };
 
@@ -99,7 +95,7 @@ const Register = ({ navigation }) => {
     return unsubscribe;
   }, []);
 
-  const handleSignUp = (userEmail, userPassword, name, height, goalStep) => {
+  const handleSignUp = (userEmail, userPassword, name, height) => {
     //console.log("SIGN UP)");
     createUserWithEmailAndPassword(auth, userEmail, userPassword)
   .then((userCredential) => {
@@ -119,7 +115,6 @@ const Register = ({ navigation }) => {
         email: userEmail,
         name: name,
         height: height,
-        goalStep: goalStep,
         uid: auth.currentUser.uid
       };
       addItem(userData);
@@ -253,9 +248,6 @@ const Register = ({ navigation }) => {
                 {errors.name.message}
               </Text>
             )}
-
-
-
             <View style={styles.rowContainer}>
               <View style={{ width: "48%" }}>
                 <Controller
@@ -285,41 +277,7 @@ const Register = ({ navigation }) => {
                   </Text>
                 )}
               </View>
-
-              
-            </View>
-            <View style={styles.rowContainer}>
-              <View style={{ width: "48%" }}>
-                <Controller
-                  control={control}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: requiredMessage,
-                    },
-                  }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={styles.input}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      placeholder="Goal Step Length (inches)"
-                      keyboardType="numeric"
-                      maxLength={3}
-                    />
-                  )}
-                  name="goalStep"
-                />
-                {errors.edad && (
-                  <Text style={styles.validationMsgText}>
-                    {errors.height.message}
-                  </Text>
-                )}
-              </View>
-
-              
-            </View>
+            </View>    
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 onPress={handleSubmit(onSubmit)}
@@ -346,7 +304,8 @@ const styles = StyleSheet.create({
     // backgroundColor: "#222831",
     backgroundColor: "#dedad2",
     borderWidth: 2,
-    height: ScreenHeight,
+    
+    : ScreenHeight,
   },
   scrollContainer: {
     flex: 1,
