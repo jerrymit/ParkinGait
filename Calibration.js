@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Vibration } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, TextInput, View, Keyboard, Vibration, Dimensions } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import { initializeApp, firebase } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
