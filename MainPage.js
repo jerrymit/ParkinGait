@@ -35,7 +35,8 @@ const MainPage = ({ navigation }) => {
     navigation.navigate("LogIn");
   }else{
   }
-  const calibrationRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~")+'/Calibration');
+  console.log((auth.currentUser.email).replaceAll(".","~"));
+  const calibrationRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/Calibration');
   get(calibrationRef).then((snapshot) => {
     // Extract the data from the snapshot
     const calibrationData = snapshot.val();
@@ -77,7 +78,7 @@ const MainPage = ({ navigation }) => {
   const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
   const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
 
-  const postListRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~")+'/StepLength/');
+  const postListRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength/');
   const newPostRef = push(postListRef);
   //const magnitudeData = accelerometerData.map(data => Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z));
 

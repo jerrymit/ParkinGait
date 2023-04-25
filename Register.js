@@ -65,7 +65,7 @@ const Register = ({ navigation }) => {
       height: userData.height,
     })*/
     //console.log(userData);
-    set(ref(db, 'users/'+(userData.email).replace(".","~")+"/"), {
+    set(ref(db, 'users/'+(userData.email).replaceAll(".","~")+"/"), {
       email: userData.email,
       name: userData.name,
       height: userData.height

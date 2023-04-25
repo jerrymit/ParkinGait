@@ -16,7 +16,7 @@ document.getElementById('patient').addEventListener('change', function() {
     
 
 
-      var macroDataRef = database.ref('users/'+(patientID).replace(".","~").trim());
+      var macroDataRef = database.ref('users/'+(patientID).replaceAll(".","~").trim());
       macroDataRef.once('value').then(function(snap){
         /*for (var month in snap.val()){
           var monthData = snap.val()[month];

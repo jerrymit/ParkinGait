@@ -36,7 +36,7 @@ const firebaseConfig = {
       navigation.navigate("LogIn");
     }else{
     }
-    const RegisterRef = ref(db, 'users/'+(auth.currentUser.email).replace(".","~"));
+    const RegisterRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~"));
     get(RegisterRef).then((snapshot) => {
       // Extract the data from the snapshot
       const RegisterData = snapshot.val();
@@ -116,7 +116,7 @@ const firebaseConfig = {
       const gaitConstant = av_step_length / av_time;
       console.log(gaitConstant);
   
-      set(ref(database, 'users/'+(auth.currentUser.email).replace(".","~")+'/Calibration'), {
+      set(ref(database, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/Calibration'), {
         gaitConstant: gaitConstant,
         Threshold: mean,
         GoalStep: newGoalStep,
