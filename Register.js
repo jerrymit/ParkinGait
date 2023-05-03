@@ -5,20 +5,16 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Image,
-  Button,
   Dimensions,
 } from "react-native";
-import { getDatabase, ref, set,push, child, setValue } from "firebase/database";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword,createUserWithEmailAndPassword  } from "firebase/auth";
+import { ref, set } from "firebase/database";
+import { createUserWithEmailAndPassword  } from "firebase/auth";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-
 import { auth, db } from "./firebase";
 
 
 let ScreenHeight = Dimensions.get("window").height;
 import { useForm, Controller } from "react-hook-form";
-import DropDownPicker from "react-native-dropdown-picker";
 
 const requiredMessage = "This field is required";
 const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -42,75 +38,45 @@ const Register = ({ navigation }) => {
       password: "",
       passwordRepeat: ""
     },
-    // defaultValues: {
-    //   name: "",
-    //   gender: "",
-    //   email: "",
-    //   password: "",
-    //   passwordRepeat: "",
-    // },
   });
 
   const password = useRef({});
   password.current = watch("password", "");
 
   let addItem = (userData) => {
-
-    /*dbUsers = ref(db,'users/' + userData.uid);
-    dbUsersRef = push(dbUsers);
-    console.log(userData.uid);
-    set(dbUsersRef, {
-      email: userData.email,
-      name: userData.name,
-      height: userData.height,
-    })*/
-    //console.log(userData);
     set(ref(db, 'users/'+(userData.email).replaceAll(".","~")+"/"), {
       email: userData.email,
       name: userData.name,
       height: userData.height
     });
-
   };
-  const onSubmit = (data) => {
 
+  const onSubmit = (data) => {
     handleSignUp(data.email, data.password, data.name, data.height);
     navigation.navigate("Calibration");
   };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-    
       if (user) {
         console.log("DID IT");
-        // navigation.replace("Menu");
-
-        //navigation.navigate("Calibration");
       }
       else{
         console.log("Didnt");
       }
     });
-
     return unsubscribe;
   }, []);
 
   const handleSignUp = (userEmail, userPassword, name, height) => {
-    //console.log("SIGN UP)");
     createUserWithEmailAndPassword(auth, userEmail, userPassword)
   .then((userCredential) => {
-        // Signed in 
-        
-        // ...
     })
     .catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorMessage);
-        // ..
     });
-    //const user = userCredential.user;
-    //console.log(user);
     const userData = {
         email: userEmail,
         name: name,
@@ -118,7 +84,6 @@ const Register = ({ navigation }) => {
         uid: auth.currentUser.uid
       };
       addItem(userData);
-      
   };
 
   const handleLogin = () => {
@@ -135,10 +100,6 @@ const Register = ({ navigation }) => {
     <View style={styles.container}>
       <KeyboardAwareScrollView
         resetScrollToCoords={{ x: 0, y: 0 }}
-        // contentContainerStyle={styles.container}
-        // scrollEnabled={true}
-        // enableAutomaticScroll={true}
-        // enableOnAndroid={true}
       >
         <View style={styles.formContainer}>
           <Text style={styles.titleText}>Registration</Text>
@@ -301,7 +262,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "flex-start",
     alignItems: "center",
-    // backgroundColor: "#222831",
     backgroundColor: "#dedad2",
     borderWidth: 2,
     height: ScreenHeight,
@@ -311,7 +271,6 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: "center",
     alignItems: "center",
-    // backgroundColor: "#222831",
     minWidth: "80%",
     backgroundColor: "red",
   },
@@ -377,11 +336,6 @@ const styles = StyleSheet.create({
     color: "#FA7D09",
     fontWeight: "400",
     fontSize: 15,
-  },
-  dropDownContainer: {
-    // width: "100%",
-    // height: 30,
-    // borderWidth: 1,
   },
   rowContainer: {
     flexDirection: "row",
