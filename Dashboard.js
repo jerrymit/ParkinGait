@@ -52,7 +52,6 @@ const Dashboard = ({ navigation }) => {
     // Extract the data from the snapshot
     const userData = snapshot.val();
     goalStep = userData.goalStep;
-    //console.log(gaitConstant + " " + DETECTION_THRESHOLD);
   })
 
   useEffect(() => {
@@ -63,7 +62,6 @@ const Dashboard = ({ navigation }) => {
       let d = [];
       fullData = snapshot.val();
       let values = Object.values(fullData);
-      //numSteps = 0;
       setAsymmetry(0);
       setTotalSteps(values.length);
       good = 0;
@@ -83,16 +81,9 @@ const Dashboard = ({ navigation }) => {
       leftSum = 0;
       rightSum = 0;
       for (i in values){
-
-        //setAsymmetry(10);
-        //setAsymmetry(0);
-        //console.log(asymmetry);
         for (j in values[i]){
           k = j;
           v = values[i][k];
-          /*console.log("Y");
-          console.log(k);
-          console.log(v);*/
           
           console.log("v, diff");
           console.log(v);
@@ -103,17 +94,11 @@ const Dashboard = ({ navigation }) => {
             if (v > goalStep){
              good+=1;
             }
-            //yes = asymmetry
-            //setAsymmetry(yes+2);
-            //console.log("asym");
-            //console.log(asymmetry);
             if (left){
               leftSum +=v;
-              //setAsymmetry(asymmetry+v);
             }
             else{
               rightSum+=v
-              //setAsymmetry(asymmetry-v);
             }
             left=!left
          }
@@ -122,13 +107,6 @@ const Dashboard = ({ navigation }) => {
         setPercentGood(good/d.length);
         setTotalSteps(d.length);
         setAsymmetry(Math.abs((leftSum-rightSum)/(leftSum+rightSum)));
-        /*console.log("YUH");
-        console.log(parseInt(i)-Date.now());
-        console.log(values[i]);
-        console.log(parseInt(i));
-        console.log(Date.now());
-        console.log((Date.now()-parseInt(Object.keys(values)[i]))/1000/3600)
-        */
       }
       console.log(d);
       if (d.length==0){
@@ -146,28 +124,8 @@ const Dashboard = ({ navigation }) => {
       console.log(goodSteps);
       console.log(totalSteps);
       console.log(asymmetry);
-      //data.push(4);
-      //console.log(data);
-      /*let lastValuesIndex = values.length - 1;
-      values.map((item, index) => {
-        d.push({ x: index, y: item.bpm });
-      });
-      setFbData(d);
-      setSensorData(values[lastValuesIndex]);
-
-      setIsLoading(false);*/
     });
   }, [value]);
-  //console.log(data);
-  /*useEffect(() => {
-    if (sensorData) {
-      setTempValue(sensorData.temp);
-      setSpo2Value(sensorData.spo2);
-      setBpmValue(sensorData.bpm);
-    }
-  }, [fbData, sensorData]);*/
-
-  // const navigation = useNavigation();
   const handleSignOut = () => {
     auth
       .signOut()
@@ -243,10 +201,7 @@ const Dashboard = ({ navigation }) => {
 />
 <Text>{Math.floor(asymmetry*100)}% Asymmetry</Text>
 <Text>{Math.floor(percentGood*100)}% Time with Correct Step Length</Text>
-        
-
       {/* <Text>Userx: {auth.currentUser?.email}</Text> */}
-
       {/* <TouchableOpacity onPress={handleSignOut} style={styles.button}>
         <Text style={styles.buttonText}>Sign out</Text>
       </TouchableOpacity> */}
@@ -342,4 +297,4 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     marginBottom: 15,
   },
-});
+}); 
