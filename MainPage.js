@@ -1,3 +1,4 @@
+/// IMPORTS ///
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View,Switch, Vibration} from 'react-native';
 import { Accelerometer } from 'expo-sensors';
@@ -19,33 +20,33 @@ import {
 } from "react-native";
 import MultiSwitch from 'react-native-multiple-switch'
 import Slider from '@react-native-community/slider';
-let ScreenHeight = Dimensions.get("window").height;
 
+/// DEFINING CONSTANTS ///
+let ScreenHeight = Dimensions.get("window").height;
 const ACCELEROMETER_TIMING = 100; // ms
 const ACCELEROMETER_HZ = 1000 / ACCELEROMETER_TIMING;
 const USER_HEIGHT = 1.778 // m
 const METERS_TO_INCHES = 39.3701 // constant, no units
-let gaitConstant, DETECTION_THRESHOLD, goalStep;
-const DISTANCE_THRESHOLD = 3; // represents distance between peaks/valleys to filter out noise
-
+let gaitConstant, DETECTION_THRESHOLD, goalStep, placement;
+const DISTANCE_THRESHOLD = 3; // represents distance between "steps" to filter out noise
 
 const MainPage = ({ navigation }) => {
   if (auth.currentUser==null){
-
     navigation.navigate("LogIn");
   }else{
   }
-  console.log((auth.currentUser.email).replaceAll(".","~"));
   const calibrationRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/Calibration');
+    // the replace all is important as React Native/Firebase doesn't like the dots in emails
   get(calibrationRef).then((snapshot) => {
-    // Extract the data from the snapshot
+    // Extract the data from the snapshot of Firebase
     const calibrationData = snapshot.val();
     gaitConstant = calibrationData.gaitConstant;
     DETECTION_THRESHOLD = calibrationData.Threshold;
+    placement = calibrationData.Placement;
     setGoalStep(parseFloat(calibrationData.GoalStep));
-    //console.log(gaitConstant + " " + DETECTION_THRESHOLD);
   })
 
+  /// DEFINFING STATE CONSTANTS (more robust than regulat consts) ///
   const [isWalking, setIsWalking] = useState(false);
   const [accelerometerData, setAccelerometerData] = useState([]);
   const [stepLength, setStepLength] = useState(0);
@@ -53,138 +54,218 @@ const MainPage = ({ navigation }) => {
   const [peakTimes, setPeakTimes] = useState([]);
   const [waitingFor1stValue, setWaitingFor1stValue] = useState(false);
   const [waitingFor2ndValue, setWaitingFor2ndValue] = useState(false);
-  const [waitingFor3rdValue, setWaitingFor3rdValue] = useState(false);
-  const [sound, setSound] = useState();
+  const [waitingFor3rdValue, setWaitingFor3rdValue] = useState(false); // not sure this is needed anymore
+  const [sound1, setSound1] = useState();
+  const [sound2, setSound2] = useState();
   const [goalStep, setGoalStep] = useState(0);
-
   const vib_choices = ['Over Step Goal', 'Under Step Goal'];
   const [vibrateOption, setVibrationOption] = useState(vib_choices[0]);
   const items = ['Vibrate Phone', 'Vibrate Wristband', 'No Vibrations'];
   const [vibrateValue, setVibrateValue] = useState(items[0]);
-
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => {setIsEnabled(previousState => !previousState); }
-
   const [range, setRange] = useState(30);
   const [lastPeakSign, setLastPeakSign] = useState(-1); // -1 for positive, 1 for negative
   const [lastPeakIndex, setLastPeakIndex] = useState(0);
-  const [isFirstPeakPositive, setIsFirstPeakPositive] = useState(false);
+  const [isFirstPeakPositive, setIsFirstPeakPositive] = useState(false); // also not needed most likely
   
+  // Extracting the Accemerometer Data needed //
   const xData = accelerometerData.map(data => parseFloat(data.x.toFixed(4)));
-  const yData = accelerometerData.map(data => parseFloat(data.y.toFixed(4)) - 1);
+  const yData = accelerometerData.map(data => parseFloat(data.y.toFixed(4)));
+  const yDataNext = (yData.length > 0) ? yData[yData.length-1] : 0;
+  const yDataCurr = (yData.length > 0) ? yData[yData.length-2] : 0;
+  const yDataPrev = (yData.length > 1) ? yData[yData.length-3] : 0;
+    // note that the "Curr" is really the prev reading since we cannot predict the future 
   const zData = accelerometerData.map(data => parseFloat(data.z.toFixed(4)));
   //const zDataNext = (zData.length > 0) ? zData[zData.length-1] : 0;
   const zDataCurr = (zData.length > 0) ? zData[zData.length-1] : 0;
   const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
   const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
 
+  // Refs for extracting data from Firebase //
   const postListRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength/');
   const newPostRef = push(postListRef);
-  //const magnitudeData = accelerometerData.map(data => Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z));
 
-  if (isWalking){
-    //console.log(stepLengthFirebase);
-    /*set(ref(db, 'users/'+auth.currentUser.uid+'/StepLength/stepLength/'), {
-      1: 2,
-    });*/
-    /*const postListRef = ref(db, 'users');
-    const newPostRef = push(postListRef);
-    set(newPostRef, {
-        hello:"hello"
-    });
-    
-    set(ref(db, 'users/'+userData.uid+"/"), {
-      email: userData.email,
-      name: userData.name,
-      height: userData.height,
-      goalStep: userData.goalStep
-    });*/
-    
-  }
+  /// STEP DETECTION / STEP LENGTH ESTIMATE METHOD ///
 
-  if (waitingFor1stValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
-    if (lastPeakIndex === -1 || zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
-      if(lastPeakSign == -1){
-        if (peakTimes.length == 0) {
-          setPeakTimes([...peakTimes, DataTime]);
+  // For when the phone is in a pocket or on the front (ie the FACE of the front faces where the person is going) //
+  if (placement == "In Pocket/In Front") {
+    // finds times when average is passed //
+    if (waitingFor1stValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
+      if (lastPeakIndex === -1 || zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
+        // for some reason this lastPeakSign is needed despite it seeming redundant with the "waitingforXvalue" consts //
+        if(lastPeakSign == -1){
+          if (peakTimes.length == 0) {
+            setPeakTimes([...peakTimes, DataTime]);
+          }
+          else {
+            setPeakTimes((prevData) => [...prevData, DataTime]);
+          }
+          setLastPeakIndex(zData.length);
+          setLastPeakSign(1);
+          setIsFirstPeakPositive(true);
+          setWaitingFor1stValue(false);
+          setWaitingFor2ndValue(true);
         }
-        else {
+      }
+    } 
+
+    if (waitingFor2ndValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
+      if (zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
+        if (lastPeakSign == 1) {
           setPeakTimes((prevData) => [...prevData, DataTime]);
+          setLastPeakIndex(zData.length);
+          setLastPeakSign(-1);
+          setWaitingFor2ndValue(false);
+          setWaitingFor1stValue(true);
         }
-        //console.log(peakTimes);
-        setLastPeakIndex(zData.length);
-        setLastPeakSign(1);
-        setIsFirstPeakPositive(true);
-        setWaitingFor1stValue(false);
-        setWaitingFor2ndValue(true);
-        //setWaitingFor3rdValue(true);
       }
     }
-  } 
 
-  if (waitingFor2ndValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
-    if (zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
-      if (lastPeakSign == 1) {
-        setPeakTimes((prevData) => [...prevData, DataTime]);
-        setLastPeakIndex(zData.length);
-        setLastPeakSign(-1);
-        setWaitingFor2ndValue(false);
-        //setWaitingFor3rdValue(true);
-        setWaitingFor1stValue(true);
+    // If two steps detected, estimate step length //
+    if (peakTimes.length == 2){
+      console.log(peakTimes);
+      // for whatever reason it's necessary to create each peak
+      const peak2 = peakTimes[peakTimes.length - 1];
+      const peak1 = peakTimes[peakTimes.length - peakTimes.length];
+      const peakBetweenTime = peak2 - peak1;
+      const stepLengthest = peakBetweenTime * gaitConstant * METERS_TO_INCHES;
+          
+      setStepLength(stepLengthest);
+      setStepLengthFirebase((prevStep) => [...prevStep, stepLengthest]);
+      sec = Date.now();
+      set(newPostRef, {
+        [sec]:stepLengthest // may want to change this to the StepLengthFirebase value for better UI on the Firebase end
+      });
+      console.log("STEP");
+      console.log(stepLengthest);
+
+      // Figures out when the phone should vibrate/make a sound //
+      if (vibrateOption == vib_choices[0]){
+        if (vibrateValue == items[0]){
+          if (stepLengthest > goalStep){
+            Vibration.vibrate(50);
+            playSound2();
+          }
+        }
       }
+      if (vibrateOption == vib_choices[1]){
+        if (vibrateValue == items[0]){
+          if (stepLengthest < goalStep){
+            Vibration.vibrate(50);
+            playSound1();
+          }
+        }
+      }
+
+      setWaitingFor1stValue(true);
+      // sets PeakTimes to the last value, ie last step //
+      setPeakTimes([peakTimes[peakTimes.length - 1]]);
+    }
+
+    // Getting sounds //
+    async function playSound1() {
+      const { sound1 } = await Audio.Sound.createAsync( require('./beep2.mp3'), { shouldPlay: true }
+      );
+      setSound1(sound1);
+      sound1.playAsync();
+    }
+  
+    async function playSound2() {
+      const { sound2 } = await Audio.Sound.createAsync( require('./beep3.mp3'), { shouldPlay: true }
+      );
+      setSound2(sound2);
+      sound2.playAsync();
     }
   }
- 
-  /*if (waitingFor3rdValue && yDataCurr > yDataPrev && yDataCurr > yDataNext && yDataCurr > DETECTION_THRESHOLD){
-    if (yData.length - lastPeakIndex >= DISTANCE_THRESHOLD) {
-      if(lastPeakSign == -1){
-        setPeakTimes((prevData) => [...prevData, DataTime]);
-        setLastPeakIndex(yData.length);
-        setLastPeakSign(1);
-        setWaitingFor3rdValue(false);
-      }
-    }
-  } */
 
-  if (peakTimes.length == 2){
-    console.log(peakTimes);
-    const peak2 = peakTimes[peakTimes.length - 1];
-    const peak1 = peakTimes[peakTimes.length - peakTimes.length];
-    const peakBetweenTime = peak2 - peak1;
-    const stepLengthest = peakBetweenTime * gaitConstant * METERS_TO_INCHES;
-        
-    setStepLength(stepLengthest);
-    setStepLengthFirebase((prevStep) => [...prevStep, stepLengthest]);
-    sec = Date.now();
-    set(newPostRef, {
-      [sec]:stepLengthest
-    });
-    console.log("STEP");
-    console.log(stepLengthest);
-
-    if (vibrateOption == vib_choices[0]){
-      if (vibrateValue == items[0]){
-        if (stepLengthest > goalStep){
-          Vibration.vibrate(50);
-          playSound();
-        }
-      }
-    }
-    if (vibrateOption == vib_choices[1]){
-      if (vibrateValue == items[0]){
-        if (stepLengthest < goalStep){
-          Vibration.vibrate(50);
-          playSound();
+  // For when the phone is in a thigh holder or on the side (ie the FACE of the front faces perpendicular of where the person is facing) //
+  if (placement == "In Waist/On Side"){
+    // finds peaks //
+      // code works in a similar way as to the front facing detection besides just locating the steps //
+    if (waitingFor1stValue && yDataCurr > DETECTION_THRESHOLD && yDataCurr > yDataPrev && yDataCurr < yDataNext){
+      if (lastPeakIndex === -1 || yData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
+        if(lastPeakSign == -1){
+          if (peakTimes.length == 0) {
+            setPeakTimes([...peakTimes, DataTime]);
+          }
+          else {
+            setPeakTimes((prevData) => [...prevData, DataTime]);
+          }
+          setLastPeakIndex(yData.length);
+          setLastPeakSign(1);
+          setWaitingFor1stValue(false);
+          setWaitingFor2ndValue(true);
         }
       }
     }
 
-    setWaitingFor1stValue(true);
-    //setIsFirstPeakPositive(true);
-    setPeakTimes([peakTimes[peakTimes.length - 1]]);
+    if (waitingFor2ndValue && yDataCurr >  DETECTION_THRESHOLD && yDataCurr > yDataPrev && yDataCurr < yDataNext){
+      if (yData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
+        if (lastPeakSign == 1) {
+          setPeakTimes((prevData) => [...prevData, DataTime]);
+          setLastPeakIndex(yData.length);
+          setWaitingFor1stValue(true);
+          setWaitingFor2ndValue(false);
+          setLastPeakSign(-1);
+        }
+      }
+    }
+
+    if (peakTimes.length == 2){
+      console.log(peakTimes);
+      const peak2 = peakTimes[peakTimes.length - 1];
+      const peak1 = peakTimes[peakTimes.length - peakTimes.length];
+      const peakBetweenTime = peak2 - peak1;
+      const stepLengthest = peakBetweenTime * gaitConstant * METERS_TO_INCHES;
+          
+      setStepLength(stepLengthest);
+      setStepLengthFirebase((prevStep) => [...prevStep, stepLengthest]);
+      sec = Date.now();
+      set(newPostRef, {
+        [sec]:stepLengthest
+      });
+      console.log("STEP");
+      console.log(stepLengthest);
+
+      if (vibrateOption == vib_choices[0]){
+        if (vibrateValue == items[0]){
+          if (stepLengthest > goalStep){
+            Vibration.vibrate(50);
+            playSound2();
+          }
+        }
+      }
+      if (vibrateOption == vib_choices[1]){
+        if (vibrateValue == items[0]){
+          if (stepLengthest < goalStep){
+            Vibration.vibrate(50);
+            playSound1();
+          }
+        }
+      }
+
+      setWaitingFor1stValue(true);
+      setPeakTimes([peakTimes[peakTimes.length - 1]]);
+    }
+
+    async function playSound1() {
+      const { sound1 } = await Audio.Sound.createAsync( require('./beep2.mp3'), { shouldPlay: true }
+      );
+      setSound1(sound1);
+      sound1.playAsync();
+    }
+  
+    async function playSound2() {
+      const { sound2 } = await Audio.Sound.createAsync( require('./beep3.mp3'), { shouldPlay: true }
+      );
+      setSound2(sound2);
+      sound2.playAsync();
+    }
   }
 
   const handleToggleWalking = () => {
+    // code resets values based on where the patient is walking or not //
     if (!isWalking) {
       setAccelerometerData([]);
       setPeakTimes([]);
@@ -210,30 +291,17 @@ const MainPage = ({ navigation }) => {
       setLastPeakIndex(-1);
     }
   };
-  async function playSound() {
-    //console.log('Loading Sound');
-    const { sound } = await Audio.Sound.createAsync( require('./beep2.mp3'), { shouldPlay: true }
-    );
-    setSound(sound);
-
-    //console.log('Playing Sound');
-    sound.playAsync();
-  }
 
   useEffect(() => {
     let subscription;
-    const timer = setInterval(() => {
-      //console.log(range);
-      
+    // Metronome //
+    const timer = setInterval(() => {      
       if (isEnabled){
-        //Haptics.selectionAsync();
-        //console.log("hey");
-        /*Haptics.notificationAsync(
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-        )*/
-        playSound();
+        playSound1();
       }   
     }, 60.0/range*1000)
+
+    // If walking, get data from accelerometer //
     if (isWalking) {
       subscription = Accelerometer.addListener((accelerometerData) => {
         setAccelerometerData((prevData) => [...prevData, accelerometerData]);
@@ -248,9 +316,14 @@ const MainPage = ({ navigation }) => {
     }
   }, [isWalking, isEnabled, range]);
 
-  const handleLogData = () => {
+  // Code not used but can be added as a button easily to display the accelerometer data to manually check accuracy //
+  /*const handleLogData = () => {
+    console.log(xData);
     console.log(yData);
-  }
+    console.log(xData);
+  }*/
+
+  /// NAVIGATION FUNCTIONS ///
   const moveToRegister = () => {
     navigation.navigate("Register");
   }
@@ -260,7 +333,8 @@ const MainPage = ({ navigation }) => {
   const moveToCalibration = () => {
     navigation.navigate("Calibration");
   }
-  //console.log(goalStep);
+
+  /// CREATING THE MAIN PAGE AND STYLES ///
 
   return (
     <View style={styles.container}>
