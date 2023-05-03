@@ -1,6 +1,3 @@
-import { useNavigation } from "@react-navigation/native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword,createUserWithEmailAndPassword  } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
@@ -11,7 +8,6 @@ import {
   TouchableOpacity,
   View,
   Image,
-  Dimensions,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
@@ -21,54 +17,27 @@ const LogIn = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // const navigation = useNavigation();
   auth.onAuthStateChanged((user) =>{
     if (user) {
-      //console.log("SIGNED IN");
-      //change to dashboard
     } else {
-      // No user is signed in.
-      //console.log("NOT SIGNE IN");
     }
   });
   useEffect(() => {
 
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      //console.log(user);
       if (user) {
-        //navigation.replace("Menu");
         console.log("SIGNING IN");
-        navigation.navigate("MainPage"); //chagne to dashboard
+        navigation.navigate("MainPage"); 
       }
     });
 
     return unsubscribe;
   }, []);
 
-  // const handleSignUp = () => {
-  //   auth
-  //     .createUserWithEmailAndPassword(email, password)
-  //     .then((userCredentials) => {
-  //       const user = userCredentials.user;
-  //       console.log("Registered with:", user.email);
-  //     })
-  //     .catch((error) => alert(error.message));
-  // };
-
   const handleSignUp = () => {
     console.log("goging to regiset");
     navigation.navigate("Register");
   };
-
-  /*const handleLogin = () => {
-    auth
-      .signInWithEmailAndPassword(email, password)
-      .then((userCredentials) => {
-        const user = userCredentials.user;
-        console.log("Logged in with:", user.email);
-      })
-      .catch((error) => alert(error.message));
-  };*/
   const handleLogin = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
@@ -87,13 +56,11 @@ const LogIn = ({ navigation }) => {
   };
 
   return (
-    // <KeyboardAvoidingView style={styles.container} behavior="padding">
     <KeyboardAwareScrollView
       resetScrollToCoords={{ x: 0, y: 0 }}
       contentContainerStyle={styles.container}
       scrollEnabled
     >
-      {/* <View style={styles.container} behavior="padding"> */}
       <Image
         source={require("./assets/icon.png")}
         style={styles.logo}
@@ -118,13 +85,6 @@ const LogIn = ({ navigation }) => {
         <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          onPress={handleSignUp}
-          style={[styles.button, styles.buttonOutline]}
-        >
-          <Text style={styles.buttonOutlineText}>Registrarse</Text>
-        </TouchableOpacity> */}
-
         <TouchableOpacity
           onPress={handleSignUp}
           style={[styles.button, styles.buttonOutline]}
@@ -132,10 +92,7 @@ const LogIn = ({ navigation }) => {
           <Text style={styles.buttonOutlineText}>Create New User</Text>
         </TouchableOpacity>
       </View>
-      {/* </View> */}
     </KeyboardAwareScrollView>
-
-    // </KeyboardAvoidingView>
   );
 };
 
