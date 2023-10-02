@@ -41,6 +41,12 @@ const movingAverage = (data, windowSize) => {
     return result;
 };
 
+// for implement dynamic thresholding
+const standardDeviation = (arr) => {
+    const avg = arr.reduce((sum, val) => sum + val, 0) / arr.length;
+    const sumOfSquares = arr.reduce((sum, val) => sum + (val - avg) * (val - avg), 0);
+    return Math.sqrt(sumOfSquares / arr.length);
+};
 
 const MainPage = ({ navigation }) => {
   if (auth.currentUser==null){
@@ -106,7 +112,12 @@ const MainPage = ({ navigation }) => {
   const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
   const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
 
+  const mean = average(zData);
+  const zStdDev = standardDeviation(zData);
+  const dynamicThresholdZ = mean + zStdDev * 0.5; 
 
+  const yStdDev = standardDeviation(yData);
+  const dynamicThresholdY = average(positiveYs) + yStdDev * 0.5;
 
 
   // Refs for extracting data from Firebase //
@@ -119,7 +130,7 @@ const MainPage = ({ navigation }) => {
   if (placement == "In Pocket/In Front") {
     // finds times when average is passed //
     if (waitingFor1stValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
-      if (lastPeakIndex === -1 || zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
+      if (lastPeakIndex === -1 || zData.length - lastPeakIndex > DISTANCE_THRESHOLD || zData.length - lastPeakIndex > dynamicThresholdZ) {
         // for some reason this lastPeakSign is needed despite it seeming redundant with the "waitingforXvalue" consts //
         if(lastPeakSign == -1){
           if (peakTimes.length == 0) {
@@ -138,7 +149,7 @@ const MainPage = ({ navigation }) => {
     } 
 
     if (waitingFor2ndValue && ((zDataCurr < DETECTION_THRESHOLD && zDataPrev > DETECTION_THRESHOLD) || (zDataCurr > DETECTION_THRESHOLD && zDataPrev < DETECTION_THRESHOLD))){
-      if (zData.length - lastPeakIndex > DISTANCE_THRESHOLD) {
+      if (zData.length - lastPeakIndex > DISTANCE_THRESHOLD || zData.length - lastPeakIndex > dynamicThresholdZ) {
         if (lastPeakSign == 1) {
           setPeakTimes((prevData) => [...prevData, DataTime]);
           setLastPeakIndex(zData.length);
