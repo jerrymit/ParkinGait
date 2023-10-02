@@ -324,8 +324,14 @@ const MainPage = ({ navigation }) => {
   }*/
 
   /// NAVIGATION FUNCTIONS ///
+//   const moveToRegister = () => {
+//     navigation.navigate("Register");
+//   }
   const moveToRegister = () => {
-    navigation.navigate("Register");
+    navigation.navigate("EditProfile");
+  }
+  const moveToForgetPassword = () => {
+    navigation.navigate("ForgetPassword");
   }
   const moveToDashboard = () => {
     navigation.navigate("Dashboard");
@@ -378,7 +384,7 @@ const MainPage = ({ navigation }) => {
             onChange={(val) => setVibrateValue(val)}
           />
 
-<View style={{ flexDirection:"row", paddingTop: ScreenHeight * 0.05 }}>   
+    <View style={{ flexDirection:"row", paddingTop: ScreenHeight * 0.05 }}>   
       <TouchableOpacity style={styles.button2} onPress={moveToRegister}>
         <Text style={styles.buttonText}>{'Change User Information'}</Text>
       </TouchableOpacity>
@@ -389,7 +395,9 @@ const MainPage = ({ navigation }) => {
       <TouchableOpacity style={styles.button2} onPress={moveToCalibration}>
         <Text style={styles.buttonText}>{'Recalibrate'}</Text>
       </TouchableOpacity>
-      <Text style={{ color: '#808080' , fontSize : 15, padding: ScreenHeight * 0.02}}>User ID: {auth.currentUser.email} </Text>
+
+
+      <Text style={{ color: '#808080' , fontSize : 15, marginTop:ScreenHeight * 0.05}}>User ID: {auth.currentUser.email} </Text>
     </View>
   );
 };
@@ -421,7 +429,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     margin: 10,
     alignItems: 'flex-start'
-  },
+  },  
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
