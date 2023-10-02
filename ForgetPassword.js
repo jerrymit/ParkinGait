@@ -7,12 +7,21 @@ let ScreenHeight = Dimensions.get("window").height;
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [isValidEmail, setIsValidEmail] = useState(true);
+
+  const isEmailValid = (email) => {
+    // Regular expression for email validation
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    return emailRegex.test(email);
+  };
 
   const handleResetPassword = () => {
     if (!isEmailValid(email)) {
       setIsValidEmail(false);
       return;
     }
+
+    setIsValidEmail(true);
 
     sendPasswordResetEmail(auth, email)
       .then(() => {
