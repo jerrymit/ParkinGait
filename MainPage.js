@@ -30,6 +30,18 @@ const METERS_TO_INCHES = 39.3701 // constant, no units
 let gaitConstant, DETECTION_THRESHOLD, goalStep, placement;
 const DISTANCE_THRESHOLD = 3; // represents distance between "steps" to filter out noise
 
+// for smoothing the accelerometer data
+const movingAverage = (data, windowSize) => {
+    let result = [];
+    for (let i = 0; i < data.length - windowSize + 1; i++) {
+        let currentWindow = data.slice(i, i + windowSize);
+        let windowAvg = currentWindow.reduce((a, b) => a + b) / windowSize;
+        result.push(windowAvg);
+    }
+    return result;
+};
+
+
 const MainPage = ({ navigation }) => {
   if (auth.currentUser==null){
     navigation.navigate("LogIn");
@@ -70,17 +82,32 @@ const MainPage = ({ navigation }) => {
   const [isFirstPeakPositive, setIsFirstPeakPositive] = useState(false); // also not needed most likely
   
   // Extracting the Accemerometer Data needed //
-  const xData = accelerometerData.map(data => parseFloat(data.x.toFixed(4)));
-  const yData = accelerometerData.map(data => parseFloat(data.y.toFixed(4)));
+  //const xData = accelerometerData.map(data => parseFloat(data.x.toFixed(4)));
+  //const yData = accelerometerData.map(data => parseFloat(data.y.toFixed(4)));
+
+  // x, y, z data after smoothing
+  const windowSize = 5;
+  const xDataRaw = accelerometerData.map(data => data.x.toFixed(4));
+  const yDataRaw = accelerometerData.map(data => parseFloat(data.y.toFixed(4)));
+  const zDataRaw = accelerometerData.map(data => parseFloat(data.z.toFixed(4)));
+  
+  const xData = movingAverage(xDataRaw, windowSize);
+  const yData = movingAverage(yDataRaw, windowSize);
+  const zData = movingAverage(zDataRaw, windowSize);
+
   const yDataNext = (yData.length > 0) ? yData[yData.length-1] : 0;
   const yDataCurr = (yData.length > 0) ? yData[yData.length-2] : 0;
   const yDataPrev = (yData.length > 1) ? yData[yData.length-3] : 0;
-    // note that the "Curr" is really the prev reading since we cannot predict the future 
-  const zData = accelerometerData.map(data => parseFloat(data.z.toFixed(4)));
+  
+  // note that the "Curr" is really the prev reading since we cannot predict the future 
+  //const zData = accelerometerData.map(data => parseFloat(data.z.toFixed(4)));
   //const zDataNext = (zData.length > 0) ? zData[zData.length-1] : 0;
   const zDataCurr = (zData.length > 0) ? zData[zData.length-1] : 0;
   const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
   const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
+
+
+
 
   // Refs for extracting data from Firebase //
   const postListRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength/');
