@@ -8,14 +8,22 @@ import {
   TouchableOpacity,
   View,
   Image,
+  Alert,
+  Dimensions
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { auth } from "./firebase";
 
+let ScreenHeight = Dimensions.get("window").height;
+
 const LogIn = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const moveToForgetPassword = () => {
+    navigation.navigate("ForgetPassword");
+  }
 
   auth.onAuthStateChanged((user) =>{
     if (user) {
@@ -45,13 +53,18 @@ const LogIn = ({ navigation }) => {
         const user = userCredential.user;
         console.log(user.email);
         if (user!= null){
-          navigation.navigate("MainPage");
+          navigation.navigate("Calibration");
         }
         // ...
       })
       .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
+        // Login failed, show prompt
+        if (error.code === "auth/wrong-password") {
+          Alert.alert("Invalid Password", "The password you entered is incorrect. Please try again.");
+        } else {
+          Alert.alert("Login Error", "Failed to log in. Please check your credentials and try again.");
+        }
+        console.error("Login error:", error);
       });
   };
 
@@ -92,7 +105,17 @@ const LogIn = ({ navigation }) => {
           <Text style={styles.buttonOutlineText}>Create New User</Text>
         </TouchableOpacity>
       </View>
+
+      <View>
+        <TouchableOpacity onPress={moveToForgetPassword}>
+        <Text style={{ color: "#198fc2" , fontSize : 15, marginTop:ScreenHeight * 0.02}}>{'Forget Your Password?'}</Text>
+        </TouchableOpacity>
+      </View>
+
+
+
     </KeyboardAwareScrollView>
+    
   );
 };
 

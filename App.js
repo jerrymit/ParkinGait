@@ -13,6 +13,9 @@ import LogIn from "./LogIn";
 import Register from "./Register";
 import Calibration from "./Calibration";
 import Dashboard from "./Dashboard";
+import EditProfile from "./EditProfile";
+import ForgotPassword from "./ForgetPassword";
+
 
 //import Dashboard from "./Dashboard";
 const Stack = createNativeStackNavigator();
@@ -30,6 +33,8 @@ export default function App() {
         <Stack.Screen name="Calibration" component={Calibration} />
         <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="Dashboard" component={Dashboard} />
+        <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="ForgetPassword" component={ForgotPassword} />
         <Stack.Screen name="MainPage" component={MainPage} />
       </Stack.Navigator>
     </NavigationContainer>
