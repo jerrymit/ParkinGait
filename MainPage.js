@@ -86,6 +86,7 @@ const MainPage = ({ navigation }) => {
   const [lastPeakSign, setLastPeakSign] = useState(-1); // -1 for positive, 1 for negative
   const [lastPeakIndex, setLastPeakIndex] = useState(0);
   const [isFirstPeakPositive, setIsFirstPeakPositive] = useState(false); // also not needed most likely
+
   
   // Extracting the Accemerometer Data needed //
   //const xData = accelerometerData.map(data => parseFloat(data.x.toFixed(4)));

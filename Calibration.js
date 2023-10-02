@@ -96,6 +96,11 @@ const firebaseConfig = {
     const [goalStep, setGoalStep] = useState(0);
     const [newGoalStep, setNewGoalStep] = useState(0);
 
+    // for feedback
+    const [feedbackData, setFeedbackData] = useState({ steps: 0, strideLength: 0, gaitConstant: 0 });
+    const [showFeedback, setShowFeedback] = useState(false);
+
+
     // Determining location of the phone //
     const loc_plac = ['In Pocket/In Front', 'In Waist/On Side'];
     const [locationPlacement, setLocationPlacement] = useState(loc_plac[0]);
@@ -183,6 +188,15 @@ const firebaseConfig = {
           Placement: locationPlacement,
         });
 
+        setFeedbackData({
+            steps: steps.length,
+            strideLength: av_step_length,
+            gaitConstant: gaitConstant
+        });
+        
+        setShowFeedback(true);
+        
+
         // Navigate to Main Page //
         console.log("MOVING TO MAINPAGE");
         navigation.navigate("MainPage");
@@ -230,6 +244,31 @@ const firebaseConfig = {
       }
     }
 
+    let feedbackUI;
+    if (showFeedback) {
+    feedbackUI = (
+        <View style={styles.feedbackContainer}>
+            <Text style={styles.feedbackText}>Steps Detected: {feedbackData.steps}</Text>
+            <Text style={styles.feedbackText}>Stride Length: {feedbackData.strideLength.toFixed(2)} meters</Text>
+            <Text style={styles.feedbackText}>Gait Constant: {feedbackData.gaitConstant.toFixed(2)}</Text>
+            <Text style={styles.feedbackText}>Does this seem accurate?</Text>
+            <View style={styles.feedbackButtons}>
+                <TouchableOpacity style={styles.feedbackButton} onPress={() => setShowFeedback(false)}>
+                    <Text style={styles.buttonText}>Yes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.feedbackButton} onPress={() => {
+                    setShowFeedback(false);
+                    setIsCollecting(false);
+                    setAccelerometerData([]);
+                }}>
+                    <Text style={styles.buttonText}>No, recalibrate</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
+
+
     return (
       <View style={styles.container}>
           <Text style={styles.titleText}> Calibration </Text>
@@ -259,6 +298,7 @@ const firebaseConfig = {
           <TouchableOpacity style={styles.button} onPress={handleLogData}>
             <Text style={styles.buttonText}>Calibrate</Text>
           </TouchableOpacity>
+          
       </View>
     );
 };
