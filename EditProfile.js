@@ -68,5 +68,3 @@ const EditProfile = ({ navigation }) => {
 };
 
 export default EditProfile;
-
-  
