@@ -68,3 +68,35 @@ const EditProfile = ({ navigation }) => {
 };
 
 export default EditProfile;
+
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 16,
+    },
+    inputContainer: {
+      marginBottom: 16,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 4,
+      padding: 10,
+      margin: 5,
+      marginBottom: 16,
+    },
+    button: {
+      backgroundColor: '#4CAF50',
+      borderRadius: 5,
+      margin: 5,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      alignItems: 'center'
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  });
+  
