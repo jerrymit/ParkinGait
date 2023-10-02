@@ -292,6 +292,7 @@ const firebaseConfig = {
             onChange={(val1) => setLocationPlacement(val1)}
           />
           <Text numberOfLines={5}></Text>
+          {feedbackUI}
           <TouchableOpacity style={styles.button} onPress={handleToggleCollecting}>
             <Text style={styles.buttonText}>{isCollecting ? 'Stop Collecting' : 'Start Collecting'}</Text>
           </TouchableOpacity>
