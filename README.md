@@ -16,7 +16,9 @@
     3. Login.js: First page that a user opens up to where they can log in
     4. MainPage.js: Main page where user can start step length tracking and control cuing
     5. Register.js: Page where user can create a profile
-    6. **For all files please see the documentation therein for what each part does**
+    6. ForgotPassword.js: Page where user can reset the password
+    7. EditProfile.js: Page where user can edit the personal information stored
+    8. **For all files please see the documentation therein for what each part does**
 2. Website Files
     1. index.html: main landing page where user can log in
     2. dashboard.html: page where physical therapist can track patient data
