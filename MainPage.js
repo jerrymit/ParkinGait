@@ -80,6 +80,8 @@ const MainPage = ({ navigation }) => {
   const [lastPeakSign, setLastPeakSign] = useState(-1); // -1 for positive, 1 for negative
   const [lastPeakIndex, setLastPeakIndex] = useState(0);
   const [isFirstPeakPositive, setIsFirstPeakPositive] = useState(false); // also not needed most likely
+  const [dynamicThreshold, setDynamicThreshold] = useState(DETECTION_THRESHOLD);
+  const [recentAccelData, setRecentAccelData] = useState([]);
   
   // Extracting the Accemerometer Data needed //
   //const xData = accelerometerData.map(data => parseFloat(data.x.toFixed(4)));
@@ -105,9 +107,6 @@ const MainPage = ({ navigation }) => {
   const zDataCurr = (zData.length > 0) ? zData[zData.length-1] : 0;
   const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
   const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
-
-
-
 
   // Refs for extracting data from Firebase //
   const postListRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength/');
@@ -171,7 +170,7 @@ const MainPage = ({ navigation }) => {
       if (vibrateOption == vib_choices[0]){
         if (vibrateValue == items[0]){
           if (stepLengthest > goalStep){
-            Vibration.vibrate(50);
+            Vibration.vibrate(500);
             playSound2();
           }
         }
@@ -179,7 +178,7 @@ const MainPage = ({ navigation }) => {
       if (vibrateOption == vib_choices[1]){
         if (vibrateValue == items[0]){
           if (stepLengthest < goalStep){
-            Vibration.vibrate(50);
+            Vibration.vibrate(500);
             playSound1();
           }
         }
@@ -306,7 +305,7 @@ const MainPage = ({ navigation }) => {
         setIsFirstPeakPositive(false);
         setLastPeakSign(-1);
         setLastPeakIndex(-1);
-        Vibration.vibrate(100);
+        Vibration.vibrate(900);
       }, 3000);
     } else {
       setIsWalking(false);
@@ -318,6 +317,30 @@ const MainPage = ({ navigation }) => {
       setLastPeakIndex(-1);
     }
   };
+
+  const MAX_DATA_POINTS = 20; //
+  // to deal with the new accelermeter data
+  function handleNewAccelerometerData(data) {
+    setRecentAccelData(prevData => {
+        let newData = [...prevData, data];
+        // only keep the newest max_data_points
+        return newData.slice(Math.max(newData.length - MAX_DATA_POINTS, 0));
+    });
+}
+
+useEffect(() => {
+    if (recentAccelData.length >= MAX_DATA_POINTS) {
+        // compute std
+        let mean = recentAccelData.reduce((acc, value) => acc + value, 0) / recentAccelData.length;
+        let variance = recentAccelData.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / recentAccelData.length;
+        let stdDev = Math.sqrt(variance);
+
+        // update threshold according to std
+        setDynamicThreshold(mean + stdDev * 1.5);
+    }
+}, [recentAccelData]);
+
+
 
   useEffect(() => {
     let subscription;

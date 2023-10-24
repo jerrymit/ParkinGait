@@ -38,6 +38,8 @@ const Dashboard = ({ navigation }) => {
   const [asymmetry, setAsymmetry] = useState(0);
   const userRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~"));
   const [pieData, setPieData] = useState({labels:["NA"], data:[0]});
+  const [displayPercentGood, setDisplayPercentGood] = useState(0);
+  const [displayAsymmetry, setDisplayAsymmetry] = useState(0);
   const chartConfig = {
     backgroundGradientFrom: "#1E2923",
     backgroundGradientFromOpacity: 0,
@@ -55,77 +57,190 @@ const Dashboard = ({ navigation }) => {
   })
 
   useEffect(() => {
+    setDisplayPercentGood(Math.round(percentGood * 100));
+    setDisplayAsymmetry(Math.round(asymmetry * 100));
+  }, [percentGood, asymmetry]);
 
-    const dataRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength');
-    get(dataRef).then((snapshot) => {
-
-      let d = [];
-      fullData = snapshot.val();
-      let values = Object.values(fullData);
-      setAsymmetry(0);
-      setTotalSteps(values.length);
-      good = 0;
-      timeInterval = 0;
-      switch(value){
-        case "Day":
-          timeInterval = 24;
-          break;
-        case "Month":
-          timeInterval = 730;
-          case "Year":
-            timeInterval = 8760;
-
-      }
-      console.log(values);
-      left = true;
-      leftSum = 0;
-      rightSum = 0;
-      for (i in values){
-        for (j in values[i]){
-          k = j;
-          v = values[i][k];
-          
-          console.log("v, diff");
-          console.log(v);
-          console.log(Date.now()-parseInt(k))
-          if (Date.now()-parseInt(k)< timeInterval*1000*3600 && v < 700 ){
-            d.push(v);
-            
-            if (v > goalStep){
-             good+=1;
-            }
-            if (left){
-              leftSum +=v;
-            }
-            else{
-              rightSum+=v
-            }
-            left=!left
-         }
+  useEffect(() => {
+    const fetchStepData = async () => {
+      try {
+        const userSnapshot = await get(userRef);
+        if (userSnapshot.exists()) {
+          goalStep = userSnapshot.val().goalStep;
         }
+  
+        const dataRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength');
+        const dataSnapshot = await get(dataRef);
+    
+        let d = [];
+        if (dataSnapshot.exists()) {
+          const fullData = dataSnapshot.val();
+          let values = Object.values(fullData);
+          setAsymmetry(0);
+          setTotalSteps(values.length);
+          let good = 0;
+          let timeInterval = 0;
+  
+          switch(value){
+            case "Day":
+              timeInterval = 24 * 3600 * 1000;
+              break;
+            case "Month":
+              timeInterval = 730 * 3600 * 1000;
+              break;
+            case "Year":
+              timeInterval = 8760 * 3600 * 1000;
+              break;
+          }
+  
+          let left = true;
+          let leftSum = 0;
+          let rightSum = 0;
+  
+          for (const i in values) {
+            for (const k in values[i]) {
+              const v = values[i][k];
+              
+              if ((Date.now() - parseInt(k)) < timeInterval && v < 700) {
+                d.push(v);
+                
+                if (v > goalStep) {
+                  good += 1;
+                }
+                if (left) {
+                  leftSum += v;
+                } else {
+                  rightSum += v;
+                }
+                left = !left;
+              }
+            }
+          }
+  
+          let newPercentGood = d.length > 0 ? good / d.length : 0.4;
+          setPercentGood(newPercentGood);
 
-        setPercentGood(good/d.length);
-        setTotalSteps(d.length);
-        setAsymmetry(Math.abs((leftSum-rightSum)/(leftSum+rightSum)));
+          let newAsymmetry = (leftSum + rightSum) > 0 
+                             ? Math.abs((leftSum - rightSum) / (leftSum + rightSum))
+                             : 0;
+          setAsymmetry(newAsymmetry);
+          
+          setTotalSteps(d.length);
+  
+          if (d.length === 0) {
+            setData([0]);
+          } else {
+            setData(d);
+          }
+  
+          setPieData({
+            labels: ["Percent Time with Correct Step Length", "Percent Asymmetry"],
+            data: [newPercentGood, newAsymmetry]
+          });
+  
+  
+          setGoodSteps(good);
+        }
+      } catch (error) {
+        console.log("Error fetching data:", error);
       }
-      console.log(d);
-      if (d.length==0){
-        setData([0]);
-      }
-      else{
-        setData(d);
-      }
-      setPieData({
-        labels:["Percent Time with Correct Step Length", "Percent Asymmetry"],
-        data:[percentGood, asymmetry]
-      })
-      console.log(pieData);
-      setGoodSteps(good);
-      console.log(goodSteps);
-      console.log(totalSteps);
-      console.log(asymmetry);
-    });
-  }, [value]);
+    };
+  
+    fetchStepData();
+  }, [value, db, userRef]);
+  
+
+//   useEffect(() => {
+
+//     const dataRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength');
+//     get(dataRef).then((snapshot) => {
+
+//       let d = [];
+//       fullData = snapshot.val();
+//       let values = Object.values(fullData);
+//       setAsymmetry(0);
+//       setTotalSteps(values.length);
+//       good = 0;
+//       timeInterval = 0;
+//       switch(value){
+//         case "Day":
+//           timeInterval = 24;
+//           break;
+//         case "Month":
+//           timeInterval = 730;
+//           case "Year":
+//             timeInterval = 8760;
+
+//       }
+//       //console.log(values);
+//       left = true;
+//       leftSum = 0;
+//       rightSum = 0;
+//       for (i in values){
+//         for (j in values[i]){
+//           k = j;
+//           v = values[i][k];
+          
+//           //console.log("v, diff");
+//           //console.log(v);
+//           //console.log(Date.now()-parseInt(k))
+//           if (Date.now()-parseInt(k)< timeInterval*1000*3600 ){
+//             d.push(v);
+            
+//             if (v > goalStep){
+//              good+=1;
+//             }
+//             if (left){
+//               leftSum +=v;
+//             }
+//             else{
+//               rightSum+=v
+//             }
+//             left=!left
+//          }
+//         }
+
+//         if (d.length > 0) {
+//             setPercentGood(good/d.length);
+            
+//             console.log('===============')
+//             console.log(d)
+//             console.log(good/d.length)
+//         } else {
+//             setPercentGood(0.4);
+//         }
+
+        
+//         setTotalSteps(d.length);
+
+//         if ((leftSum + rightSum) > 0) {
+//             setAsymmetry(Math.abs((leftSum - rightSum) / (leftSum + rightSum)));
+//         } else {
+//             setAsymmetry(0);
+//         }
+//         //setAsymmetry(Math.abs((leftSum-rightSum)/(leftSum+rightSum)));
+//       }
+//       //console.log(d);
+//       if (d.length==0){
+//         setData([0]);
+//       }
+//       else{
+//         setData(d);
+//       }
+//       setPieData({
+//         labels:["Percent Time with Correct Step Length", "Percent Asymmetry"],
+//         data:[percentGood, asymmetry]
+//       })
+//       //console.log(pieData);
+//       setGoodSteps(good);
+//       //console.log(goodSteps);
+//       //console.log(totalSteps);
+//       //console.log(asymmetry);
+//     });
+//   }, [value]);
+
+
+
   const handleSignOut = () => {
     auth
       .signOut()
@@ -189,18 +304,18 @@ const Dashboard = ({ navigation }) => {
 <Text style={{ color: '#000000' , fontSize : 30, padding: 10}}>Progress Bars</Text>
   <ProgressChart
   data={{
-        labels:["Score: ", "Asymm:"],
-        data:[percentGood, asymmetry],
+        labels:["Asymm:"],
+        data:[asymmetry],
       }}
   width={screenWidth}
   height={220}
   strokeWidth={16}
-  radius={32}
+  radius={45}
   chartConfig={chartConfig}
   hideLegend={false}
 />
-<Text>{Math.floor(asymmetry*100)}% Asymmetry</Text>
-<Text>{Math.floor(percentGood*100)}% Time with Correct Step Length</Text>
+    <Text>{displayAsymmetry}% Asymmetry</Text>
+    {/* <Text>{displayPercentGood}% Time with Correct Step Length</Text> */}
       {/* <Text>Userx: {auth.currentUser?.email}</Text> */}
       {/* <TouchableOpacity onPress={handleSignOut} style={styles.button}>
         <Text style={styles.buttonText}>Sign out</Text>

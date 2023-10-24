@@ -27,6 +27,8 @@ const EditProfile = ({ navigation }) => {
     const userId = auth.currentUser.uid;
     const userRef = ref(db, `users/${userId}`);
 
+    console.log("save")
+
     update(userRef, {
       name: name,
       height: height,

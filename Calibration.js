@@ -42,7 +42,7 @@ B. Phone on Side
 
 /// IMPORTS ///
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, TextInput, View, Keyboard, Vibration, Dimensions } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, TextInput, View, Keyboard, Vibration, Dimensions, Alert } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import { initializeApp, firebase } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
@@ -87,8 +87,13 @@ const firebaseConfig = {
     get(RegisterRef).then((snapshot) => {
       // Extract the data from the snapshot
       const RegisterData = snapshot.val();
-      setGoalStep(RegisterData.height * 0.414); // this is a recommended step length goal; 0.414 comes from the literature
+        if (!isNaN(RegisterData.height * 0.414)) {
+            setGoalStep(RegisterData.height * 0.414);
+        } else {
+            setGoalStep(USER_HEIGHT *METERS_TO_INCHES * 0.414);
+        }     
     });
+
 
     // Setting State Constants which are more robust //
     const [isCollecting, setIsCollecting] = useState(false);
@@ -106,7 +111,7 @@ const firebaseConfig = {
         setAccelerometerData([]);
         setTimeout(() => {
           setIsCollecting(true);
-          Vibration.vibrate(100);
+          Vibration.vibrate(1000);
         }, 3000);
       } else {
         setIsCollecting(false);
@@ -223,6 +228,7 @@ const firebaseConfig = {
           GoalStep: newGoalStep,
           Placement: locationPlacement,
         });
+
 
 
         console.log("MOVING TO MAINPAGE");

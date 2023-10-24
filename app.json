@@ -18,7 +18,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.parkin.gait",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1.0.0",
+      "usesVibration": true
+    },
+    "devMenu": {
+        "gestureEnabled": false
     },
     "android": {
       "adaptiveIcon": {

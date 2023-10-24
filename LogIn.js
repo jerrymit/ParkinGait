@@ -9,7 +9,8 @@ import {
   View,
   Image,
   Alert,
-  Dimensions
+  Dimensions,
+  Vibration
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
@@ -53,7 +54,7 @@ const LogIn = ({ navigation }) => {
         const user = userCredential.user;
         console.log(user.email);
         if (user!= null){
-          navigation.navigate("Calibration");
+          navigation.navigate("MainPage");
         }
         // ...
       })
@@ -110,7 +111,11 @@ const LogIn = ({ navigation }) => {
         <TouchableOpacity onPress={moveToForgetPassword}>
         <Text style={{ color: "#198fc2" , fontSize : 15, marginTop:ScreenHeight * 0.02}}>{'Forget Your Password?'}</Text>
         </TouchableOpacity>
+
+        
       </View>
+
+      
 
 
 
