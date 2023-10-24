@@ -54,7 +54,7 @@ const LogIn = ({ navigation }) => {
         const user = userCredential.user;
         console.log(user.email);
         if (user!= null){
-          navigation.navigate("MainPage");
+          navigation.navigate("Calibration");
         }
         // ...
       })
