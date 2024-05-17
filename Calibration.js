@@ -53,7 +53,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-/// FIREBASE CONFIGURATIONS ///
+// FIREBASE CONFIGURATIONS ///
 const firebaseConfig = {
     apiKey: "AIzaSyDZN7DF3BPdseBoCP2l6A3Yjbc0ECb0pMk",
     authDomain: "parkingait.firebaseapp.com",
@@ -64,6 +64,17 @@ const firebaseConfig = {
     appId: "1:987453531886:web:d641b174467546f31fb5ff",
     measurementId: "G-1C4E694RZQ"
   };
+
+// const firebaseConfig = {
+//   apiKey: "AIzaSyAA-3AL4E2X6g6eKvB5VDYjoorngVbuxjY",
+//   authDomain: "parkingait-c1655.firebaseapp.com",
+//   databaseURL: "https://parkingait-c1655-default-rtdb.firebaseio.com",
+//   projectId: "parkingait-c1655",
+//   storageBucket: "parkingait-c1655.appspot.com",
+//   messagingSenderId: "467061230583",
+//   appId: "1:467061230583:web:d954a3e06a527afcf6fcf2",
+//   measurementId: "G-YLT27CSMFB"
+// };
   const app = initializeApp(firebaseConfig);
   // Initialize Realtime Database and get a reference to the service
   const database = getDatabase(app);

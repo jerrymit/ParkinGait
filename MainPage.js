@@ -43,15 +43,15 @@ const movingAverage = (data, windowSize) => {
 
 
 // for smoothing the accelerometer data
-const movingAverage = (data, windowSize) => {
-    let result = [];
-    for (let i = 0; i < data.length - windowSize + 1; i++) {
-        let currentWindow = data.slice(i, i + windowSize);
-        let windowAvg = currentWindow.reduce((a, b) => a + b) / windowSize;
-        result.push(windowAvg);
-    }
-    return result;
-};
+// const movingAverage = (data, windowSize) => {
+//     let result = [];
+//     for (let i = 0; i < data.length - windowSize + 1; i++) {
+//         let currentWindow = data.slice(i, i + windowSize);
+//         let windowAvg = currentWindow.reduce((a, b) => a + b) / windowSize;
+//         result.push(windowAvg);
+//     }
+//     return result;
+// };
 
 // for implement dynamic thresholding
 const standardDeviation = (arr) => {
@@ -126,13 +126,14 @@ const MainPage = ({ navigation }) => {
   const zDataPrev = (zData.length > 1) ? zData[zData.length-2] : 0;
   const DataTime = (zData.length > 0) ? (zData.length/ACCELEROMETER_HZ) : 0;
 
-  const mean = average(zData);
+  // const mean = average(zData);
+  const mean = movingAverage(zData);
   const zStdDev = standardDeviation(zData);
   const dynamicThresholdZ = mean + zStdDev * 0.5; 
 
   const yStdDev = standardDeviation(yData);
-  const dynamicThresholdY = average(positiveYs) + yStdDev * 0.5;
-
+  // const dynamicThresholdY = average(positiveYs) + yStdDev * 0.5;
+  // const dynamicThresholdY = movingAverage(positiveYs) + yStdDev * 0.5;
 
   // Refs for extracting data from Firebase //
   const postListRef = ref(db, 'users/'+(auth.currentUser.email).replaceAll(".","~")+'/StepLength/');

@@ -15,6 +15,19 @@ const firebaseConfig = {
     measurementId: "G-1C4E694RZQ"
 };
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// const firebaseConfig = {
+//     apiKey: "AIzaSyAA-3AL4E2X6g6eKvB5VDYjoorngVbuxjY",
+//     authDomain: "parkingait-c1655.firebaseapp.com",
+//     databaseURL: "https://parkingait-c1655-default-rtdb.firebaseio.com",
+//     projectId: "parkingait-c1655",
+//     storageBucket: "parkingait-c1655.appspot.com",
+//     messagingSenderId: "467061230583",
+//     appId: "1:467061230583:web:d954a3e06a527afcf6fcf2",
+//     measurementId: "G-YLT27CSMFB"
+//   };
+
 const app = initializeApp(firebaseConfig);
 // Initialize Realtime Database and get a reference to the service
 const db = getDatabase(app);
